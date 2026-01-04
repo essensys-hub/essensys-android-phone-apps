@@ -4,18 +4,9 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.material3.MaterialTheme
 import com.essensys.android.data.EssensysAPI
-import com.essensys.android.ui.HomeView
-import com.essensys.android.ui.LightingView
-import com.essensys.android.ui.SettingsView
-import com.essensys.android.ui.ShuttersView
+import com.essensys.android.ui.MainScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,32 +20,8 @@ class MainActivity : ComponentActivity() {
         EssensysAPI.isWanMode = sharedPref.getBoolean("isWanMode", false)
 
         setContent {
-            EssensysApp()
-        }
-    }
-}
-
-@Composable
-fun EssensysApp() {
-    val navController = rememberNavController()
-
-    Scaffold { innerPadding ->
-        NavHost(
-            navController = navController,
-            startDestination = "home",
-            modifier = Modifier.padding(innerPadding)
-        ) {
-            composable("home") {
-                HomeView(navController)
-            }
-            composable("lighting") {
-                LightingView(navController)
-            }
-            composable("shutters") {
-                ShuttersView(navController)
-            }
-            composable("settings") {
-                SettingsView(navController)
+            MaterialTheme {
+                MainScreen()
             }
         }
     }

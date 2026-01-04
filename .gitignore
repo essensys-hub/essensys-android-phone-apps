@@ -1,0 +1,35 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android
+/app/build
+/app/captures
+/app/.externalNativeBuild
+/app/.cxx
+*.hprof
+
+# Kotlin
+.kotlin
+
+# Intellij
+*.iml
+.idea/modules.xml
+.idea/libraries/
+.idea/encodings.xml
+.idea/vcs.xml
+.idea/navEditor.xml
+.idea/runConfigurations.xml
+.idea/misc.xml
