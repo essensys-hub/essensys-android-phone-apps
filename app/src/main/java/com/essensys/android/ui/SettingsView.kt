@@ -18,7 +18,8 @@ fun SettingsView(navController: NavController) {
     val context = LocalContext.current
     val sharedPref = remember { context.getSharedPreferences("EssensysPrefs", Context.MODE_PRIVATE) }
 
-    var serverUrl by remember { mutableStateOf(EssensysAPI.serverUrl) }
+    var localUrl by remember { mutableStateOf(EssensysAPI.localUrl) }
+    var wanUrl by remember { mutableStateOf(EssensysAPI.wanUrl) }
     var username by remember { mutableStateOf(EssensysAPI.username) }
     var password by remember { mutableStateOf(EssensysAPI.password) }
     var isWanMode by remember { mutableStateOf(EssensysAPI.isWanMode) }
@@ -41,12 +42,16 @@ fun SettingsView(navController: NavController) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            Text("Configuration Locale", style = MaterialTheme.typography.titleMedium)
             OutlinedTextField(
-                value = serverUrl,
-                onValueChange = { serverUrl = it },
-                label = { Text("URL Serveur") },
+                value = localUrl,
+                onValueChange = { localUrl = it },
+                label = { Text("URL Locale") },
+                placeholder = { Text("http://mon.essensys.fr") },
                 modifier = Modifier.fillMaxWidth()
             )
+
+            Divider()
 
             Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                 Checkbox(
@@ -56,7 +61,17 @@ fun SettingsView(navController: NavController) {
                 Text("Mode WAN (Distant)")
             }
             
-            if (isWanMode) {
+            // WAN Fields always visible or only when checked? 
+            // Requests separate config, so useful to edit even if not active. 
+            // But visually better if grouped.
+            if (true) { // Always show WAN fields to allow pre-conf? Or follow typical UX? Let's show always but highlight if active.
+                 Text("Configuration Distante (WAN)", style = MaterialTheme.typography.titleMedium)
+                 OutlinedTextField(
+                    value = wanUrl,
+                    onValueChange = { wanUrl = it },
+                    label = { Text("URL Distante") },
+                    modifier = Modifier.fillMaxWidth()
+                )
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
@@ -69,6 +84,7 @@ fun SettingsView(navController: NavController) {
                     onValueChange = { password = it },
                     label = { Text("Mot de passe") },
                     modifier = Modifier.fillMaxWidth()
+                    // visualTransformation = PasswordVisualTransformation() // Recommended but not in imports currently, keep plain for now or add import
                 )
             }
 
@@ -76,14 +92,16 @@ fun SettingsView(navController: NavController) {
                 onClick = {
                     // Save to Prefs
                     with(sharedPref.edit()) {
-                        putString("serverUrl", serverUrl)
+                        putString("localUrl", localUrl)
+                        putString("wanUrl", wanUrl)
                         putString("username", username)
                         putString("password", password)
                         putBoolean("isWanMode", isWanMode)
                         apply()
                     }
                     // Update API Singleton
-                    EssensysAPI.serverUrl = serverUrl
+                    EssensysAPI.localUrl = localUrl
+                    EssensysAPI.wanUrl = wanUrl
                     EssensysAPI.username = username
                     EssensysAPI.password = password
                     EssensysAPI.isWanMode = isWanMode

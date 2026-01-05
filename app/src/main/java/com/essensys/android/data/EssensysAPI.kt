@@ -12,10 +12,16 @@ import java.util.concurrent.TimeUnit
 
 object EssensysAPI {
 
-    var serverUrl: String = "http://192.168.1.35" // Default local
+    var localUrl: String = "http://mon.essensys.fr"
+    var wanUrl: String = ""
     var username: String = ""
     var password: String = ""
     var isWanMode: Boolean = false
+    
+    // Dynamic property to get the correct URL
+    var serverUrl: String
+        get() = if (isWanMode) wanUrl else localUrl
+        set(value) { /* No-op or update specific? ideally handled via localUrl/wanUrl setters */ }
     
     // Simple callback interface
     interface ResultCallback {

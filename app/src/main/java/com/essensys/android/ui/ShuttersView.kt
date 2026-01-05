@@ -30,14 +30,22 @@ data class ShutterItem(
 
 // Hardcoded Data
 val shutterData = listOf(
-    ShutterItem("Volet 1 Salon", 618, 622),
-    ShutterItem("Volet 2 Salon", 618, 622), // Using same IDs for demo if needed, usually distinct
-    ShutterItem("Volet 3 Salon", 618, 622),
-    ShutterItem("Volet 1 Salle à Manger", 619, 623),
-    ShutterItem("Volet 2 Salle à Manger", 619, 623),
-    ShutterItem("Volet 1 Cuisine", 620, 624),
-    ShutterItem("Volet 2 Cuisine", 620, 624),
-    ShutterItem("Volet Salle de Bain 1", 621, 625)
+    ShutterItem("Volet 1 Salon", 617, 620, "1"),
+    ShutterItem("Volet 2 Salon", 617, 620, "2"),
+    ShutterItem("Volet 3 Salon", 617, 620, "4"),
+    ShutterItem("Volet 1 Salle à Manger", 617, 620, "8"),
+    ShutterItem("Volet 2 Salle à Manger", 617, 620, "16"),
+    ShutterItem("Volet Bureau", 617, 620, "32"),
+    
+    ShutterItem("Volet 1 Cuisine", 619, 622, "1"),
+    ShutterItem("Volet 2 Cuisine", 619, 622, "2"),
+    ShutterItem("Volet Salle de Bain 1", 619, 622, "4"),
+    
+    ShutterItem("Volet 1 Grande Chambre", 618, 621, "1"),
+    ShutterItem("Volet 2 Grande Chambre", 618, 621, "2"),
+    ShutterItem("Volet Petite Chambre 1", 618, 621, "4"),
+    ShutterItem("Volet Petite Chambre 2", 618, 621, "8"),
+    ShutterItem("Volet Petite Chambre 3", 618, 621, "16")
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

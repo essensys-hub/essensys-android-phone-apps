@@ -14,7 +14,8 @@ class MainActivity : ComponentActivity() {
         
         // Load configuration
         val sharedPref = getSharedPreferences("EssensysPrefs", Context.MODE_PRIVATE)
-        EssensysAPI.serverUrl = sharedPref.getString("serverUrl", "http://192.168.1.35") ?: "http://192.168.1.35"
+        EssensysAPI.localUrl = sharedPref.getString("localUrl", "http://mon.essensys.fr") ?: "http://mon.essensys.fr"
+        EssensysAPI.wanUrl = sharedPref.getString("wanUrl", "") ?: ""
         EssensysAPI.username = sharedPref.getString("username", "") ?: ""
         EssensysAPI.password = sharedPref.getString("password", "") ?: ""
         EssensysAPI.isWanMode = sharedPref.getBoolean("isWanMode", false)

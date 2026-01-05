@@ -1,7 +1,6 @@
 package com.essensys.android.ui
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,7 +13,7 @@ import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.rounded.Bed
 import androidx.compose.material.icons.rounded.Chair
 import androidx.compose.material.icons.rounded.Computer
-import androidx.compose.material.icons.rounded.Dining
+import androidx.compose.material.icons.rounded.DinnerDining
 import androidx.compose.material.icons.rounded.Kitchen
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,10 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.essensys.android.data.EssensysAPI
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 // Data Models
@@ -45,24 +42,69 @@ data class RoomLighting(
     val lights: List<LightingItem>
 )
 
-// Hardcoded Data
 val lightingData = listOf(
     RoomLighting("Salon", listOf(
         LightingItem("ls1", "Salon Direct", 612, 606, "128"),
         LightingItem("ls2", "Indirect 1", 611, 605, "2", true),
         LightingItem("ls3", "Indirect 2", 611, 605, "4", true)
     )),
-    RoomLighting("Cuisine", listOf(
-        LightingItem("lc1", "Cuisine", 615, 609, "1")
-    )),
     RoomLighting("Salle à Manger", listOf(
         LightingItem("lsm1", "S.A.M", 612, 606, "64")
     )),
-    RoomLighting("Grande Chambre", listOf(
-        LightingItem("lgc1", "Plafonnier", 613, 607, "1")
+    RoomLighting("Cuisine", listOf(
+        LightingItem("lc1", "Cuisine", 615, 609, "1"),
+        LightingItem("lc2", "Plans de travail", 615, 609, "2", true)
     )),
-     RoomLighting("Bureau", listOf(
-        LightingItem("lb1", "Bureau", 613, 607, "2")
+    RoomLighting("Entrée", listOf(
+        LightingItem("le1", "Entrée", 611, 605, "1"),
+        LightingItem("lesc", "Escalier", 613, 607, "1")
+    )),
+    RoomLighting("Dégagements", listOf(
+        LightingItem("ld1", "Dégagement 1", 616, 610, "1"),
+        LightingItem("ld2", "Dégagement 2", 616, 610, "2")
+    )),
+    RoomLighting("Grande Chambre", listOf(
+        LightingItem("lgc1", "Plafonnier", 614, 608, "128"),
+        LightingItem("lgc2", "Chevet 1", 613, 607, "2", true),
+        LightingItem("lgc3", "Chevet 2", 613, 607, "4", true)
+    )),
+    RoomLighting("Petite Chambre 1", listOf(
+        LightingItem("lpc1", "Plafonnier", 614, 608, "64"),
+        LightingItem("lpc1c1", "Chevet 1", 613, 607, "8", true),
+        LightingItem("lpc1c2", "Chevet 2", 613, 607, "16", true)
+    )),
+    RoomLighting("Petite Chambre 2", listOf(
+        LightingItem("lpc2", "Plafonnier", 614, 608, "32"),
+        LightingItem("lpc2c", "Chevet", 613, 607, "32", true)
+    )),
+    RoomLighting("Petite Chambre 3", listOf(
+        LightingItem("lpc3", "Plafonnier", 614, 608, "16"),
+        LightingItem("lpc3c1", "Chevet", 613, 607, "64", true)
+    )),
+    RoomLighting("Salle de Bain 1", listOf(
+        LightingItem("lsdb1", "Plafonnier", 616, 610, "128"),
+        LightingItem("lsdb1m", "Miroir", 615, 609, "4", true)
+    )),
+    RoomLighting("Salle de Bain 2", listOf(
+        LightingItem("lsdb2", "Plafonnier", 615, 609, "8"),
+        LightingItem("lsdb2m", "Miroir", 615, 609, "16", true)
+    )),
+    RoomLighting("WC", listOf(
+        LightingItem("lwc1", "WC 1", 615, 609, "32"),
+        LightingItem("lwc2", "WC 2", 615, 609, "64")
+    )),
+    RoomLighting("Bureau", listOf(
+        LightingItem("lb1", "Bureau", 612, 606, "32")
+    )),
+    RoomLighting("Dressing", listOf(
+        LightingItem("ldr1", "Plafonnier", 611, 605, "8"),
+        LightingItem("ldr2", "Placards", 611, 605, "16", true)
+    )),
+    RoomLighting("Exterieur & Annexes", listOf(
+        LightingItem("lt1", "Terrasse", 616, 610, "4"),
+        LightingItem("la1", "Annexe 1", 616, 610, "8"),
+        LightingItem("la2", "Annexe 2", 616, 610, "16"),
+        LightingItem("lps", "Pièce de service", 615, 609, "128")
     ))
 )
 
@@ -71,6 +113,7 @@ val lightingData = listOf(
 fun LightingView(navController: NavController) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    val expandedStates = remember { mutableStateMapOf<String, Boolean>() }
 
     Scaffold(
         containerColor = Color.Transparent,
@@ -100,24 +143,48 @@ fun LightingView(navController: NavController) {
                     Spacer(modifier = Modifier.height(16.dp))
                 }
 
-                // Global Actions
+                // Global Actions (Accordion Control)
                 item {
-                    GlobalActions(
-                        onAllOn = { 
-                            scope.launch { snackbarHostState.showSnackbar("Tout allumer...") }
-                            // Implementation for All On would loop through data
-                        },
-                        onAllOff = {
-                             scope.launch { snackbarHostState.showSnackbar("Tout éteindre...") }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = { lightingData.forEach { expandedStates[it.name] = true } },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFE0E0E0),
+                                contentColor = Color(0xFF1976D2)
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Déplier tout")
                         }
-                    )
+                        Button(
+                            onClick = { lightingData.forEach { expandedStates[it.name] = false } },
+                            colors = ButtonDefaults.buttonColors(
+                                 containerColor = Color(0xFFE0E0E0),
+                                 contentColor = Color(0xFF1976D2)
+                            ),
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Replier tout")
+                        }
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                 }
 
                 items(lightingData) { room ->
-                    RoomCard(room, onError = { msg ->
-                        scope.launch { snackbarHostState.showSnackbar(msg) }
-                    })
+                    val isExpanded = expandedStates[room.name] ?: false
+                    ExpandableRoomCard(
+                        room = room, 
+                        isExpanded = isExpanded,
+                        onExpandChange = { expandedStates[room.name] = it },
+                        onError = { msg ->
+                            scope.launch { snackbarHostState.showSnackbar(msg) }
+                        }
+                    )
                 }
             }
         }
@@ -151,48 +218,24 @@ fun InfoBanner() {
     }
 }
 
-@Composable
-fun GlobalActions(onAllOn: () -> Unit, onAllOff: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        Button(
-            onClick = onAllOn,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFFE0E0E0),
-                contentColor = Color(0xFF1976D2)
-            ),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text("Tout allumer")
-        }
-        Button(
-            onClick = onAllOff,
-            colors = ButtonDefaults.buttonColors(
-                 containerColor = Color(0xFFE0E0E0),
-                 contentColor = Color(0xFF1976D2)
-            ),
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text("Tout éteindre")
-        }
-    }
-}
+
+// Removed GlobalActions as replaced by inline Buttons in LightingView
+
 
 @Composable
-fun RoomCard(room: RoomLighting, onError: (String) -> Unit) {
-    var expanded by remember { mutableStateOf(true) }
-    
+fun ExpandableRoomCard(
+    room: RoomLighting, 
+    isExpanded: Boolean,
+    onExpandChange: (Boolean) -> Unit,
+    onError: (String) -> Unit
+) {
     // Group lights
     val directLights = room.lights.filter { !it.isIndirect }
     val indirectLights = room.lights.filter { it.isIndirect }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)), // Very light grey/white
+        colors = CardDefaults.cardColors(containerColor = Color(0xFFF5F5F5)), 
         shape = RoundedCornerShape(12.dp)
     ) {
         Column {
@@ -200,7 +243,7 @@ fun RoomCard(room: RoomLighting, onError: (String) -> Unit) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { expanded = !expanded }
+                    .clickable { onExpandChange(!isExpanded) }
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -227,30 +270,30 @@ fun RoomCard(room: RoomLighting, onError: (String) -> Unit) {
                     )
                 }
 
-                // Quick Actions in Header
+                // Quick Actions in Header (Optional, user didn't explicitly ask but good for Room control)
                 QuickActionButton(
                     icon = Icons.Default.WbSunny,
-                    color = Color(0xFF4CAF50), // Green
+                    color = Color(0xFF4CAF50), 
                     onClick = { /* Group On */ }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 QuickActionButton(
                     icon = Icons.Default.NightlightRound,
-                    color = Color(0xFF3F51B5), // Indigo
+                    color = Color(0xFF3F51B5), 
                     onClick = { /* Group Off */ }
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 
                 // Expand Icon
                 Icon(
-                    imageVector = if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                    imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
                     contentDescription = null,
                     tint = Color.Gray
                 )
             }
 
             // Expanded Content
-            AnimatedVisibility(visible = expanded) {
+            AnimatedVisibility(visible = isExpanded) {
                 Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
                     
                     if (directLights.isNotEmpty()) {
@@ -396,7 +439,7 @@ fun getRoomIcon(name: String): ImageVector {
     return when {
         name.contains("Salon", ignoreCase = true) -> Icons.Rounded.Chair // Or Weekend if available
         name.contains("Cuisine", ignoreCase = true) -> Icons.Rounded.Kitchen
-        name.contains("Manger", ignoreCase = true) -> Icons.Rounded.Dining
+        name.contains("Manger", ignoreCase = true) -> Icons.Rounded.DinnerDining
         name.contains("Chambre", ignoreCase = true) -> Icons.Rounded.Bed
         name.contains("Bureau", ignoreCase = true) -> Icons.Rounded.Computer
         else -> Icons.Default.Home
