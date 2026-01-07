@@ -81,44 +81,6 @@ fun HomeView(navController: NavController) {
                 }
             }
             
-            // Indirect Lights Section
-            item {
-                SectionTitle("Éclairage Indirects")
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Column {
-                        val previewLights = allIndirectLights.take(5)
-                        previewLights.forEachIndexed { index, light -> 
-                            LightRow(light = light, onError = {})
-                            if (index < previewLights.size - 1) {
-                                Divider(color = Color(0xFFF0F0F0), thickness = 1.dp, modifier = Modifier.padding(horizontal = 16.dp))
-                            }
-                        }
-                        if (allIndirectLights.size > 5) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable { navController.navigate("lighting") }
-                                    .padding(16.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    "Voir tout...",
-                                    color = Color(0xFF2196F3),
-                                    fontSize = 14.sp
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Heating Section
-            item {
-               HeatingCard()
-            }
             
             // Configuration Section
             item {
@@ -131,38 +93,7 @@ fun HomeView(navController: NavController) {
                 }
                 ConfigurationSummaryCard(navController)
             }
-            
-            // Notifications Section
-            item {
-                SectionTitle("Notifications")
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    shape = RoundedCornerShape(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                         modifier = Modifier.padding(16.dp),
-                         verticalAlignment = Alignment.CenterVertically,
-                         horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF2196F3))
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text("Modifier: marc@essensys.fr", style = MaterialTheme.typography.bodyMedium)
-                        }
-                        
-                        Button(
-                            onClick = { /* TODO */ },
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50)),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                            modifier = Modifier.height(32.dp)
-                        ) {
-                            Text("Modifier", fontSize = 12.sp)
-                        }
-                    }
-                }
-            }
+
             
             // Footer
             item {

@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Wifi
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -60,7 +61,9 @@ fun MainScreen() {
             composable("home") { HomeView(navController) }
             composable("lighting") { LightingView(navController) }
             composable("shutters") { ShuttersView(navController) }
+            composable("heating") { HeatingView(navController) }
             composable("alarm") { AlarmView(navController) }
+            composable("watering") { WateringView(navController) }
             composable("settings") { SettingsView(navController) }
         }
     }
@@ -75,6 +78,13 @@ fun MainHeader(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     var expanded by remember { mutableStateOf(false) }
+    
+    // Check Demo Mode state (pseudo-reactive, typically would use a StateFlow/Flow from API)
+    // For simplicity, we assume isDemoMode is checkable or we could expose it as a State
+    // Since EssensysAPI is object, we can't easily observe it without wrapping. 
+    // Ideally, pass it down or read it. Here we use a side-effect or simply poll/recompose on Nav.
+    // Let's assume passed in or we check it.
+    val isDemoMode = EssensysAPI.isDemoMode
 
     Column(
         modifier = Modifier
@@ -93,12 +103,23 @@ fun MainHeader(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.clickable { expanded = true }
                 ) {
-                    Icon(
-                        imageVector = if (isWanMode) Icons.Default.Language else Icons.Default.Wifi,
-                        contentDescription = null,
-                        tint = if (isWanMode) Color.Blue else Color(0xFF4CAF50),
-                        modifier = Modifier.size(20.dp)
-                    )
+                    // Demo Mode Icon Logic
+                    if (isDemoMode) {
+                         Icon(
+                            imageVector = Icons.Default.PlayArrow, // closest to play.rectangle
+                            contentDescription = "Demo Mode",
+                            tint = Color.Red,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = if (isWanMode) Icons.Default.Language else Icons.Default.Wifi,
+                            contentDescription = null,
+                            tint = if (isWanMode) Color.Blue else Color(0xFF4CAF50),
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "Essensys",
@@ -130,7 +151,7 @@ fun MainHeader(
             }
         }
 
-        // Tabs Row
+        // Tabs Row: Accueil, Éclairage, Volets, Chauffage, Alarme, Arrosage, Configuration
         Row(
             modifier = Modifier
                 .horizontalScroll(rememberScrollState())
@@ -138,39 +159,25 @@ fun MainHeader(
             horizontalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             HeaderTab("Accueil", selected = currentRoute == "home") {
-                navController.navigate("home") {
-                    popUpTo("home") { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate("home") { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true }
             }
             HeaderTab("Éclairage", selected = currentRoute == "lighting") {
-                navController.navigate("lighting") {
-                    popUpTo("home") { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate("lighting") { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true }
             }
             HeaderTab("Volets", selected = currentRoute == "shutters") {
-                navController.navigate("shutters") {
-                    popUpTo("home") { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate("shutters") { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true }
+            }
+            HeaderTab("Chauffage", selected = currentRoute == "heating") {
+                navController.navigate("heating") { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true }
             }
             HeaderTab("Alarme", selected = currentRoute == "alarm") {
-                navController.navigate("alarm") {
-                    popUpTo("home") { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate("alarm") { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true }
+            }
+             HeaderTab("Arrosage", selected = currentRoute == "watering") {
+                navController.navigate("watering") { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true }
             }
             HeaderTab("Configuration", selected = currentRoute == "settings") {
-                navController.navigate("settings") {
-                    popUpTo("home") { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
+                navController.navigate("settings") { popUpTo("home") { saveState = true }; launchSingleTop = true; restoreState = true }
             }
         }
         Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)

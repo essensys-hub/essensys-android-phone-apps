@@ -16,12 +16,53 @@ object EssensysAPI {
     var wanUrl: String = ""
     var username: String = ""
     var password: String = ""
+    
     var isWanMode: Boolean = false
+    var isDemoMode: Boolean = false // New Demo Mode flag
+    var isConnected: Boolean = false
     
     // Dynamic property to get the correct URL
     var serverUrl: String
         get() = if (isWanMode) wanUrl else localUrl
-        set(value) { /* No-op or update specific? ideally handled via localUrl/wanUrl setters */ }
+        set(value) { /* No-op */ }
+
+    // Init logic to check connection
+    fun checkConnection(onResult: (Boolean) -> Unit) {
+         if (isDemoMode) {
+            isConnected = true
+            onResult(true)
+            return
+        }
+
+        val urlToCheck = serverUrl // Basic check on root or /api/serverinfos
+        val request = Request.Builder()
+            .url(if (urlToCheck.endsWith("/")) "${urlToCheck}api/serverinfos" else "${urlToCheck}/api/serverinfos") // Use a lightweight endpoint
+            .build()
+
+        client.newCall(request).enqueue(object : okhttp3.Callback {
+            override fun onFailure(call: okhttp3.Call, e: IOException) {
+                Log.e("EssensysAPI", "Connection check failed: ${e.message}")
+                // Auto-switch to Demo Mode
+                isDemoMode = true
+                isConnected = true // Technically "connected" to demo
+                onResult(true) // Return valid to app, but in demo mode
+            }
+
+            override fun onResponse(call: okhttp3.Call, response: okhttp3.Response) {
+                response.use {
+                    if (response.isSuccessful) {
+                        isConnected = true
+                         onResult(true)
+                    } else {
+                        Log.e("EssensysAPI", "Connection check HTTP error: ${response.code}")
+                        isDemoMode = true
+                        isConnected = true
+                        onResult(true)
+                    }
+                }
+            }
+        })
+    }
     
     // Simple callback interface
     interface ResultCallback {
