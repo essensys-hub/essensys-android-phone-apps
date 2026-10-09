@@ -30,6 +30,8 @@ class SessionViewModel(
     private val auth: AuthRepository,
     private val portal: PortalRepository,
     private val probeCertificate: suspend (String) -> ApiResult<X509Certificate> = { LanTrust.probe(it) },
+    private val sessionPeriodMs: Long = SESSION_PERIOD_MS,
+    private val lastActionPeriodMs: Long = LAST_ACTION_PERIOD_MS,
 ) : ViewModel() {
 
     val session = store.state
@@ -161,7 +163,7 @@ class SessionViewModel(
             launch {
                 while (true) {
                     (portal.gatewayOnline() as? ApiResult.Ok)?.let { _gatewayOnline.value = it.value }
-                    delay(SESSION_PERIOD_MS)
+                    delay(sessionPeriodMs)
                 }
             }
             launch {
@@ -170,7 +172,7 @@ class SessionViewModel(
                         is ApiResult.Ok -> _lastAction.value = r.value
                         is ApiResult.Err -> Unit
                     }
-                    delay(LAST_ACTION_PERIOD_MS)
+                    delay(lastActionPeriodMs)
                 }
             }
         }
