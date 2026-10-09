@@ -33,3 +33,14 @@ local.properties
 .idea/navEditor.xml
 .idea/runConfigurations.xml
 .idea/misc.xml
+
+# Binaires et artefacts locaux (android-portal-refresh-2026-10-002) : jamais versionnés
+*.apk
+*.aab
+*.hprof
+*.keystore
+*.jks
+/app/release/
+/build/
+/app/build/
+.artifacts/
