@@ -50,8 +50,8 @@ jobs:
           ESSENSYS_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ESSENSYS_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           ESSENSYS_VERSION_NAME: ${{ steps.version.outputs.name }}
-          ESSENSYS_VERSION_CODE: ${{ github.run_number }}
-        run: ./gradlew assembleRelease --console=plain
+        # versionCode strictement croissant et > 1 (la v1.0.0 utilisait 1) : 100 + numéro d'exécution.
+        run: ESSENSYS_VERSION_CODE=$((100 + ${{ github.run_number }})) ./gradlew assembleRelease --console=plain
 
       - name: Vérification de signature et empreinte
         id: apk
