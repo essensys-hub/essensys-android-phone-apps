@@ -12,14 +12,27 @@ android {
         applicationId = "com.essensys.android"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "2.0.0-dev"
+        // Fournis par release.yml depuis le tag android-vX.Y.Z ; valeurs locales par défaut.
+        versionCode = System.getenv("ESSENSYS_VERSION_CODE")?.toInt() ?: 2
+        versionName = System.getenv("ESSENSYS_VERSION_NAME") ?: "2.0.0-dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // Signature release (design D9) : keystore hors dépôt (SOPS essensys-ansible/secrets/cloud/android-release.sops.yaml),
+    // transmis par variables d'environnement. Jamais de keystore ni de mot de passe dans le dépôt.
+    signingConfigs {
+        create("release") {
+            System.getenv("ESSENSYS_KEYSTORE_PATH")?.let { storeFile = file(it) }
+            storePassword = System.getenv("ESSENSYS_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("ESSENSYS_KEY_ALIAS")
+            keyPassword = System.getenv("ESSENSYS_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
@@ -78,3 +91,18 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 }
+
+// Échec explicite si une release est demandée sans les variables de signature.
+val releaseSigningEnv = listOf("ESSENSYS_KEYSTORE_PATH", "ESSENSYS_KEYSTORE_PASSWORD", "ESSENSYS_KEY_ALIAS", "ESSENSYS_KEY_PASSWORD")
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it.path.startsWith(":app:") && it.name.contains("Release") && (it.name.startsWith("package") || it.name.startsWith("assemble") || it.name.startsWith("bundle")) }) {
+        val missing = releaseSigningEnv.filter { System.getenv(it).isNullOrBlank() }
+        if (missing.isNotEmpty()) {
+            throw GradleException(
+                "Signature release impossible : variables manquantes ${missing.joinToString()} " +
+                    "(keystore : essensys-ansible/secrets/cloud/android-release.sops.yaml, voir README).",
+            )
+        }
+    }
+}
+

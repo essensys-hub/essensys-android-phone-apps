@@ -1,0 +1,87 @@
+name: Android Release
+
+# Tag android-vX.Y.Z[-suffixe] → APK signé + SHA-256 + release GitHub (design D9).
+# Keystore : secrets ANDROID_* (copies de essensys-ansible/secrets/cloud/android-release.sops.yaml).
+# Empreinte attendue du certificat de signature : voir essensys-ansible/secrets/README.md.
+
+on:
+  push:
+    tags: ["android-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      NO_ARMOIRE: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Version depuis le tag
+        id: version
+        run: |
+          name="${GITHUB_REF_NAME#android-v}"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$([[ "$name" == *-* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Tests avant release
+        run: ./gradlew testDebugUnitTest lintDebug --console=plain
+
+      - name: Keystore (secret → fichier temporaire)
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          umask 077
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
+          echo "ESSENSYS_KEYSTORE_PATH=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
+
+      - name: APK release signé
+        env:
+          ESSENSYS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ESSENSYS_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ESSENSYS_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ESSENSYS_VERSION_NAME: ${{ steps.version.outputs.name }}
+          ESSENSYS_VERSION_CODE: ${{ github.run_number }}
+        run: ./gradlew assembleRelease --console=plain
+
+      - name: Vérification de signature et empreinte
+        id: apk
+        run: |
+          apk="essensys-android-${{ steps.version.outputs.name }}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "$apk"
+          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$apk" | tee signer.txt
+          sha256sum "$apk" | tee "$apk.sha256"
+          echo "apk=$apk" >> "$GITHUB_OUTPUT"
+          echo "signer=$(grep -m1 'SHA-256 digest' signer.txt | awk '{print $NF}')" >> "$GITHUB_OUTPUT"
+          echo "sha=$(cut -d' ' -f1 "$apk.sha256")" >> "$GITHUB_OUTPUT"
+          rm -f "$RUNNER_TEMP/release.p12"
+
+      - name: Release GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<NOTES
+          ## Essensys Android ${{ steps.version.outputs.name }}
+
+          **Installation** : voir le [README](https://github.com/${{ github.repository }}#installation-client).
+
+          | Contrôle | Valeur |
+          |---|---|
+          | SHA-256 de l'APK | \`${{ steps.apk.outputs.sha }}\` |
+          | Certificat de signature (SHA-256) | \`${{ steps.apk.outputs.signer }}\` |
+
+          Vérifier l'APK : \`shasum -a 256 ${{ steps.apk.outputs.apk }}\`.
+          NOTES
+          flags=()
+          [ "${{ steps.version.outputs.prerelease }}" = "true" ] && flags+=(--prerelease)
+          gh release create "$GITHUB_REF_NAME" "${{ steps.apk.outputs.apk }}" "${{ steps.apk.outputs.apk }}.sha256" \
+            --title "Essensys Android ${{ steps.version.outputs.name }}" --notes-file notes.md "${flags[@]}"

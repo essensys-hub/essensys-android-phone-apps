@@ -8,6 +8,8 @@ L'application Android officielle pour piloter une installation domotique Essensy
 
 L'APK signé est publié dans les [releases GitHub](https://github.com/essensys-hub/essensys-android-phone-apps/releases) avec son empreinte SHA-256. On ne versionne plus d'APK dans le dépôt.
 
+Certificat de signature officiel (SHA-256) : `A0:96:0E:61:21:9C:E1:0A:40:81:92:C0:7E:E3:9F:7C:B2:0B:41:DB:BD:7F:61:C7:B0:4A:7E:D5:22:4D:D2:B2`. Une release se publie en poussant un tag `android-vX.Y.Z` (workflow `release.yml`).
+
 ## Fonctionnalités (V1)
 
 - **Connexion cloud** avec votre compte du portail (email et mot de passe), y compris le changement obligatoire d'un mot de passe temporaire.
