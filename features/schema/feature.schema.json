@@ -244,6 +244,10 @@
         "testthat": {
           "$ref": "#/$defs/pathArray"
         },
+        "junit": {
+          "$ref": "#/$defs/pathArray",
+          "description": "Tests JUnit (Kotlin/Java : Android, JVM) ; titres lus depuis les noms de fonctions @Test."
+        },
         "coverage_must_test": {
           "type": "array",
           "items": {
