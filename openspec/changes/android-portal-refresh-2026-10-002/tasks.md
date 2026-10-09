@@ -36,7 +36,7 @@
 ## 6. Qualité, CI et livraison (#6)
 
 - [ ] 6.1 Workflow CI : build, lint, tests unitaires, `nonreg.yml` réutilisable (`./gradlew testDebugUnitTest`, résultats `app/build/test-results/**/*.xml`) ; vérifier un run vert sur la PR
-- [ ] 6.2 `/checkup essensys-android-phone-apps` vert, captures (connexion, éclairage, volets, réglages, clair et sombre) postées sur #11
+- [x] 6.2 `/checkup essensys-android-phone-apps` vert, captures (connexion, éclairage, volets, réglages, clair et sombre) postées sur #11
 - [x] 6.3 Keystore de release créé et chiffré SOPS dans `essensys-ansible/secrets/`, `signingConfig` lue depuis l'environnement ; vérifier qu'un `assembleRelease` sans variables échoue clairement
 - [ ] 6.4 Workflow `release.yml` (tag `android-v*` : build signé, SHA-256, release GitHub avec instructions) ; vérifier sur `android-v2.0.0-rc1`
 - [x] 6.5 README, captures et guide d'installation client (sideload, empreinte, mode cloud / LAN) mis à jour
