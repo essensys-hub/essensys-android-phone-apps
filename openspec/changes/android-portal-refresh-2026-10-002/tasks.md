@@ -25,7 +25,7 @@
 - [x] 4.2 Écran Éclairage (par pièce, tout allumer / éteindre, résultat, anti-rebond) ; tests instrumentés
 - [x] 4.3 Écran Volets (par volet, par zone, tout, temps de course en lecture) ; tests instrumentés
 - [x] 4.4 Mode test dry-run (réglage, bandeau, en-tête, message `test_ok`) ; `NR-android-7`
-- [ ] 4.5 Signaler dans `essensys-memory/wiki/concepts/table-d-echange.md` l'écart des indices volets (wiki contre code portail)
+- [x] 4.5 Signaler dans `essensys-memory/wiki/concepts/table-d-echange.md` l'écart des indices volets (wiki contre code portail)
 
 ## 5. Thème et finitions (#5)
 
@@ -39,5 +39,5 @@
 - [ ] 6.2 `/checkup essensys-android-phone-apps` vert, captures (connexion, éclairage, volets, réglages, clair et sombre) postées sur #11
 - [ ] 6.3 Keystore de release créé et chiffré SOPS dans `essensys-ansible/secrets/`, `signingConfig` lue depuis l'environnement ; vérifier qu'un `assembleRelease` sans variables échoue clairement
 - [ ] 6.4 Workflow `release.yml` (tag `android-v*` : build signé, SHA-256, release GitHub avec instructions) ; vérifier sur `android-v2.0.0-rc1`
-- [ ] 6.5 README, captures et guide d'installation client (sideload, empreinte, mode cloud / LAN) mis à jour
+- [x] 6.5 README, captures et guide d'installation client (sideload, empreinte, mode cloud / LAN) mis à jour
 - [ ] 6.6 Livrer la v2.0.0 au client et recueillir son retour en commentaire de #11
