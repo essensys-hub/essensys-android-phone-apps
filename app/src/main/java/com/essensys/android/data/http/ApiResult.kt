@@ -40,7 +40,12 @@ sealed interface ApiError {
         override val userMessage = text?.takeIf { it.isNotBlank() } ?: "Erreur serveur ($status)."
     }
     data class Network(val host: String, val cause: String?) : ApiError {
-        override val userMessage = "Connexion impossible à $host"
+        /** Échec TLS en LAN : certificat non confirmé ou différent de celui épinglé (design D4). */
+        val isCertificateProblem: Boolean
+            get() = cause?.let { Regex("certif|trust anchor|CertPath|non confirmé", RegexOption.IGNORE_CASE).containsMatchIn(it) } == true
+        override val userMessage = if (isCertificateProblem) {
+            "Le certificat de la gateway ($host) n'est pas celui confirmé. Connexion bloquée."
+        } else "Connexion impossible à $host"
     }
 }
 

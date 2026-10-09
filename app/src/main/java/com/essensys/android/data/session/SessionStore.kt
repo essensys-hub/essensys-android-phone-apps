@@ -23,7 +23,8 @@ data class SessionState(
     val passwordChangeRequired: Boolean = false,
     val theme: ThemePreference = ThemePreference.SYSTEM,
     val testMode: Boolean = false,
-    val pinnedLanCaSha256: String? = null,
+    /** Certificat épinglé de la gateway LAN (PEM), confirmé par l'utilisateur (design D4). */
+    val pinnedLanCertPem: String? = null,
     /** Non modifiable par l'utilisateur ; surchargé uniquement par les tests (serveur simulé). */
     val cloudHost: String = Hosts.CLOUD,
 ) {

@@ -80,6 +80,9 @@ fun EssensysColors.toColorScheme(dark: Boolean): ColorScheme {
         onPrimaryContainer = Color.White,
         secondary = secondary,
         onSecondary = Color.White,
+        // Puces / éléments sélectionnés : teinte primaire du portail (pas le violet Material par défaut).
+        secondaryContainer = primary.copy(alpha = 0.15f),
+        onSecondaryContainer = primary,
         error = danger,
         onError = Color.White,
         background = background,

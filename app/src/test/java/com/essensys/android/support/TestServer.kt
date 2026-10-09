@@ -14,7 +14,8 @@ class TestServer(mode: ConnectionMode = ConnectionMode.CLOUD, token: String? = n
     val store = InMemorySessionStore(
         SessionState(mode = mode, cloudHost = base, lanHost = base, token = token, testMode = testMode),
     )
-    val container = AppContainer(store, guardNoArmoire = true)
+    // Serveur simulé en HTTP clair : on neutralise l'épinglage TLS LAN (testé à part dans LanTrustTest).
+    val container = AppContainer(store, guardNoArmoire = true, configureLan = {})
 
     fun enqueue(code: Int, body: String = "", vararg headers: Pair<String, String>) {
         val builder = MockResponse.Builder().code(code).body(body)

@@ -12,7 +12,7 @@ import okhttp3.Response
 import java.io.IOException
 
 /** Exécute une requête JSON et convertit statut / corps en [ApiResult]. Aucun repli « démo » (spec connection-modes). */
-class ApiCaller(private val client: OkHttpClient) {
+class ApiCaller(private val clientProvider: () -> OkHttpClient) {
 
     private val jsonType = "application/json; charset=utf-8".toMediaType()
 
@@ -28,7 +28,7 @@ class ApiCaller(private val client: OkHttpClient) {
 
     private suspend fun execute(baseUrl: String, request: Request): ApiResult<RawResponse> = withContext(Dispatchers.IO) {
         try {
-            client.newCall(request).execute().use { response -> toResult(response) }
+            clientProvider().newCall(request).execute().use { response -> toResult(response) }
         } catch (e: ArmoireMutationBlocked) {
             throw e
         } catch (e: IOException) {
