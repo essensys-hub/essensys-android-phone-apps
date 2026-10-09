@@ -1,0 +1,141 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "android-portal-refresh-2026-10-002",
+  "title": "Refonte et mise à jour de l'application Android (parité portail)",
+  "status": "in-progress",
+  "owner": "rhinosys",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#11",
+    "project_item": "PVTI_lADODqt0Wc4BavHTzg_r-vM"
+  },
+  "git": {
+    "branch": "feat/android-portal-refresh-2026-10-002",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "android-portal-refresh-2026-10-002",
+    "path": "openspec/changes/android-portal-refresh-2026-10-002",
+    "proposal": "openspec/changes/android-portal-refresh-2026-10-002/proposal.md",
+    "design": "openspec/changes/android-portal-refresh-2026-10-002/design.md",
+    "tasks": "openspec/changes/android-portal-refresh-2026-10-002/tasks.md",
+    "specs": [
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/mobile-auth/spec.md",
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/connection-modes/spec.md",
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/domotic-controls/spec.md",
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/portal-theme/spec.md",
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/android-quality/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/src/main/java/com/essensys/android/EssensysApp.kt",
+      "app/src/main/java/com/essensys/android/MainActivity.kt",
+      "app/src/main/java/com/essensys/android/data/auth/AuthRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/ControlRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/IndexTable.kt",
+      "app/src/main/java/com/essensys/android/data/http/ApiCaller.kt",
+      "app/src/main/java/com/essensys/android/data/http/ApiResult.kt",
+      "app/src/main/java/com/essensys/android/data/http/Dto.kt",
+      "app/src/main/java/com/essensys/android/data/http/HttpClientFactory.kt",
+      "app/src/main/java/com/essensys/android/data/http/LanTrust.kt",
+      "app/src/main/java/com/essensys/android/data/http/NoArmoireInterceptor.kt",
+      "app/src/main/java/com/essensys/android/data/session/PersistentSessionStore.kt",
+      "app/src/main/java/com/essensys/android/data/session/PortalRepository.kt",
+      "app/src/main/java/com/essensys/android/data/session/SecretCipher.kt",
+      "app/src/main/java/com/essensys/android/data/session/SessionStore.kt",
+      "app/src/main/java/com/essensys/android/di/AppContainer.kt",
+      "app/src/main/java/com/essensys/android/ui/AppRoot.kt",
+      "app/src/main/java/com/essensys/android/ui/components/Components.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/AuthScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ControlViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/Destination.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightingScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/MainScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/SessionViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ShuttersScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/theme/Theme.kt",
+      "app/src/main/AndroidManifest.xml",
+      "app/src/main/res/xml/network_security_config.xml",
+      "app/build.gradle.kts",
+      "gradle/libs.versions.toml"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": [
+      "img/v2/01-login-light.png",
+      "img/v2/02-home-light.png",
+      "img/v2/03-lighting-light.png",
+      "img/v2/04-shutters-light.png",
+      "img/v2/05-password-change.png",
+      "img/v2/06-link.png",
+      "img/v2/07-lighting-dark.png",
+      "img/v2/08-settings-dark.png"
+    ]
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "cloud login stores jwt and shows home",
+      "unauthorized response clears session and shows login",
+      "password change required blocks app until changed",
+      "no demo fallback when server unreachable",
+      "lighting sends portal index and mask",
+      "shutters send portal index and mask",
+      "dry run header sent in test mode",
+      "no armoire interceptor blocks real mutation",
+      "lighting command is sent once on double tap",
+      "requests fail until certificate is confirmed",
+      "lan host in cleartext is refused",
+      "legacy cleartext credentials are purged"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ],
+    "junit": [
+      "app/src/androidTest/java/com/essensys/android/data/PersistentSessionStoreTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/AppFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt",
+      "app/src/test/java/com/essensys/android/ThemeTokensTest.kt",
+      "app/src/test/java/com/essensys/android/data/auth/AuthRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ControlRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/IndexTableTest.kt",
+      "app/src/test/java/com/essensys/android/data/http/LanTrustTest.kt",
+      "app/src/test/java/com/essensys/android/data/http/NoArmoireInterceptorTest.kt",
+      "app/src/test/java/com/essensys/android/support/TestServer.kt",
+      "app/src/test/java/com/essensys/android/ui/SessionPollingTest.kt"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.0.0 : refonte alignée sur le portail (auth JWT cloud + LAN, éclairage, volets, thème clair/sombre), APK signé.",
+    "target_tag": "android-v2.0.0",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}

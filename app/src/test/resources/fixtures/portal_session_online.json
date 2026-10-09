@@ -1,0 +1,1 @@
+{"user":{"id":1,"email":"demo@essensys.fr","role":"user","linked_gateway_id":"gw-demo"},"portal_access":true,"gateway":{"id":"gw-demo","hostname":"demo-gateway","ip":"10.0.0.2","online":true,"last_seen":"2026-10-09T15:00:00Z"},"armoire":{"id":1,"no_serie":"SC944D-0001","remote":true}}

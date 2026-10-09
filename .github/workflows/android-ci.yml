@@ -1,0 +1,75 @@
+name: Android CI
+
+# Build, lint, tests unitaires et rapport de non-régression (NR-android-*).
+# Les tests instrumentés (émulateur) tournent via /checkup en local : jamais d'armoire réelle.
+# Feature : android-portal-refresh-2026-10-002 (essensys-hub/essensys-feature-lifecycle#11).
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *" # nightly non-régression
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    env:
+      NO_ARMOIRE: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Build + lint
+        run: ./gradlew assembleDebug lintDebug --console=plain
+
+      - name: Tests unitaires
+        id: unit
+        continue-on-error: true
+        run: ./gradlew testDebugUnitTest --console=plain
+
+      - name: Scripts lifecycle (rapport NR)
+        uses: actions/checkout@v7
+        with:
+          repository: essensys-hub/essensys-feature-lifecycle
+          ref: ${{ vars.LIFECYCLE_REF || 'main' }}
+          path: .lifecycle
+
+      - name: Rapport de non-régression
+        id: nonreg
+        run: |
+          mkdir -p .artifacts
+          set +e
+          python3 .lifecycle/scripts/feature_lifecycle/nonreg_report.py \
+            --sources app/src \
+            --out .artifacts/nonreg.json --markdown .artifacts/nonreg.md \
+            app/build/test-results/testDebugUnitTest
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: nonreg-report
+          path: |
+            .artifacts/
+            app/build/reports/
+          retention-days: 90
+
+      - name: Échec si tests ou rapport NR en erreur
+        run: |
+          if [ "${{ steps.unit.outcome }}" != "success" ]; then echo "Tests unitaires en échec"; exit 1; fi
+          if [ "${{ steps.nonreg.outputs.exit_code }}" != "0" ]; then echo "Rapport NR en erreur"; exit 1; fi

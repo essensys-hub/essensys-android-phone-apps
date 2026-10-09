@@ -1,81 +1,108 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
     namespace = "com.essensys.android"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "com.essensys.android"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 36
+        // Fournis par release.yml depuis le tag android-vX.Y.Z ; valeurs locales par défaut.
+        versionCode = System.getenv("ESSENSYS_VERSION_CODE")?.toInt() ?: 2
+        versionName = System.getenv("ESSENSYS_VERSION_NAME") ?: "2.0.0-dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
+    }
+
+    // Signature release (design D9) : keystore hors dépôt (SOPS essensys-ansible/secrets/cloud/android-release.sops.yaml),
+    // transmis par variables d'environnement. Jamais de keystore ni de mot de passe dans le dépôt.
+    signingConfigs {
+        create("release") {
+            System.getenv("ESSENSYS_KEYSTORE_PATH")?.let { storeFile = file(it) }
+            storePassword = System.getenv("ESSENSYS_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("ESSENSYS_KEY_ALIAS")
+            keyPassword = System.getenv("ESSENSYS_KEY_PASSWORD")
         }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    
+
     buildFeatures {
         compose = true
+        buildConfig = true
     }
-    
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-}
 
-kotlin {
-    compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_1_8)
+    testOptions {
+        unitTests.isReturnDefaultValues = true
     }
 }
 
 dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(platform(libs.compose.bom))
+    implementation(libs.compose.ui)
+    implementation(libs.compose.ui.graphics)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material3)
+    implementation(libs.compose.material.icons.extended)
 
-    implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0")
-    implementation("androidx.activity:activity-compose:1.8.2")
-    implementation(platform("androidx.compose:compose-bom:2023.08.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    
-    // Networking
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-scalars:2.9.0") 
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // Réseau
+    implementation(libs.okhttp)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.android)
 
-    // Icons
-    implementation("androidx.compose.material:material-icons-extended")
+    testImplementation(libs.junit)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.okhttp.tls)
+    testImplementation(libs.kotlinx.coroutines.test)
 
-    // Navigation
-    implementation("androidx.navigation:navigation-compose:2.7.6")
-
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2023.08.00"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(platform(libs.compose.bom))
+    androidTestImplementation(libs.compose.ui.test.junit4)
+    androidTestImplementation(libs.okhttp.mockwebserver)
+    debugImplementation(libs.compose.ui.tooling)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
+
+// Échec explicite si une release est demandée sans les variables de signature.
+val releaseSigningEnv = listOf("ESSENSYS_KEYSTORE_PATH", "ESSENSYS_KEYSTORE_PASSWORD", "ESSENSYS_KEY_ALIAS", "ESSENSYS_KEY_PASSWORD")
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it.path.startsWith(":app:") && it.name.contains("Release") && (it.name.startsWith("package") || it.name.startsWith("assemble") || it.name.startsWith("bundle")) }) {
+        val missing = releaseSigningEnv.filter { System.getenv(it).isNullOrBlank() }
+        if (missing.isNotEmpty()) {
+            throw GradleException(
+                "Signature release impossible : variables manquantes ${missing.joinToString()} " +
+                    "(keystore : essensys-ansible/secrets/cloud/android-release.sops.yaml, voir README).",
+            )
+        }
+    }
+}
+

@@ -4,10 +4,10 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <!-- Necessary for local network discovery in modern Android, though we mostly use direct IP -->
     
     <application
-        android:allowBackup="true"
+        android:name=".EssensysApp"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -15,10 +15,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.EssensysAndroid"
-        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="31">
-        
-        <!-- usesCleartextTraffic="true" is important for local HTTP access if not using HTTPS locally -->
 
         <activity
             android:name=".MainActivity"

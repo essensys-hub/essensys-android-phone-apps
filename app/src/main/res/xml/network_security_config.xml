@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- HTTPS uniquement (spec connection-modes). Le certificat de la gateway LAN est épinglé dans l'app
+     (LanTrust, design D4) ; aucune CA utilisateur n'est approuvée. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
