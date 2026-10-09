@@ -1,0 +1,9 @@
+schema: spec-driven
+
+context: |
+  Essensys — app Android de pilotage domotique (Kotlin, Jetpack Compose, OkHttp).
+  Référence fonctionnelle et visuelle : le portail web essensys-user-portal-frontend (cloud, mon.essensys.fr,
+  JWT Bearer sur /api/portal/*) et essensys-server-frontend (LAN, mon.essensys.local, cookie essensys_lan_session).
+  Commandes domotiques = injection k/v dans la table d'échange (indices legacy IoT : ne jamais les modifier).
+  Gouvernance : essensys-feature-lifecycle/claude/GOVERNANCE.md (ticket GitHub Project #6, OpenSpec, /checkup,
+  tests NR-android-*, jamais d'armoire réelle en test). Conventional commits référençant l'issue (#n). Français.

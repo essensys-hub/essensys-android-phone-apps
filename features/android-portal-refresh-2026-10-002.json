@@ -1,0 +1,94 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "android-portal-refresh-2026-10-002",
+  "title": "Refonte et mise à jour de l'application Android (parité portail)",
+  "status": "proposed",
+  "owner": "rhinosys",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#11",
+    "project_item": "PVTI_lADODqt0Wc4BavHTzg_r-vM"
+  },
+  "git": {
+    "branch": "feat/android-portal-refresh-2026-10-002",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "android-portal-refresh-2026-10-002",
+    "path": "openspec/changes/android-portal-refresh-2026-10-002",
+    "proposal": "openspec/changes/android-portal-refresh-2026-10-002/proposal.md",
+    "design": "openspec/changes/android-portal-refresh-2026-10-002/design.md",
+    "tasks": "openspec/changes/android-portal-refresh-2026-10-002/tasks.md",
+    "specs": [
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/mobile-auth/spec.md",
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/connection-modes/spec.md",
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/domotic-controls/spec.md",
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/portal-theme/spec.md",
+      "openspec/changes/android-portal-refresh-2026-10-002/specs/android-quality/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/build.gradle.kts",
+      "build.gradle.kts",
+      "app/src/main/AndroidManifest.xml",
+      "app/src/main/java/com/essensys/android/MainActivity.kt",
+      "app/src/main/java/com/essensys/android/data/EssensysAPI.kt",
+      "app/src/main/java/com/essensys/android/ui/MainScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/LightingView.kt",
+      "app/src/main/java/com/essensys/android/ui/ShuttersView.kt",
+      "app/src/main/java/com/essensys/android/ui/SettingsView.kt"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": []
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "cloud login stores jwt and shows home",
+      "unauthorized response clears session and shows login",
+      "password change required blocks app until changed",
+      "no demo fallback when server unreachable",
+      "lighting sends portal index and mask",
+      "shutters send portal index and mask",
+      "dry run header sent in test mode",
+      "no armoire interceptor blocks real mutation"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.0.0 : refonte alignée sur le portail (auth JWT cloud + LAN, éclairage, volets, thème clair/sombre), APK signé.",
+    "target_tag": "android-v2.0.0",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}
