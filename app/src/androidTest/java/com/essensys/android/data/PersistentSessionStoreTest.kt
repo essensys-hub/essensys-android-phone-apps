@@ -13,19 +13,29 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 class PersistentSessionStoreTest {
 
     private val context: Context = ApplicationProvider.getApplicationContext()
 
+    private companion object {
+        // Clés utilisées par la v1.0.0 dans EssensysPrefs.
+        const val LEGACY_USER_KEY = "username"
+        const val LEGACY_SECRET_KEY = "password"
+    }
+
     @Test
     fun legacy_cleartext_credentials_are_purged() {
+        // Valeurs générées à l'exécution : aucune paire identifiant/mot de passe littérale dans le source.
         context.getSharedPreferences(PersistentSessionStore.LEGACY_PREFS, Context.MODE_PRIVATE).edit()
-            .putString("username", "demo").putString("password", "en-clair").commit()
+            .putString(LEGACY_USER_KEY, UUID.randomUUID().toString())
+            .putString(LEGACY_SECRET_KEY, UUID.randomUUID().toString())
+            .commit()
         assertTrue(PersistentSessionStore.purgeLegacy(context))
         val legacy = context.getSharedPreferences(PersistentSessionStore.LEGACY_PREFS, Context.MODE_PRIVATE)
-        assertFalse(legacy.contains("password"))
+        assertFalse(legacy.contains(LEGACY_SECRET_KEY))
         assertFalse(PersistentSessionStore.purgeLegacy(context))
     }
 
