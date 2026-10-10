@@ -59,6 +59,8 @@ jobs:
           apk="essensys-android-${{ steps.version.outputs.name }}.apk"
           cp app/build/outputs/apk/release/app-release.apk "$apk"
           "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$apk" | tee signer.txt
+          # Bug #9 / NR-android-9 : refuser de publier un APK sans signature v2 ou sans arm64-v8a.
+          python3 scripts/check_release_apk.py "$apk" --junit .artifacts/apk-check/apk.xml
           sha256sum "$apk" | tee "$apk.sha256"
           echo "apk=$apk" >> "$GITHUB_OUTPUT"
           echo "signer=$(grep -m1 'SHA-256 digest' signer.txt | awk '{print $NF}')" >> "$GITHUB_OUTPUT"
