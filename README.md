@@ -42,6 +42,8 @@ Le chauffage, les scénarios, le chauffe-eau, l'arrosage et l'alarme arrivent da
    ```
    Elle doit correspondre à l'empreinte publiée dans la release.
 3. Ouvrez le fichier sur le téléphone et autorisez l'installation depuis cette source si Android le demande.
+   - **Si Play Protect affiche « Application bloquée »** : c'est normal pour une app installée hors du Play Store et encore peu répandue. L'APK officiel est sain (signature vérifiable ci-dessus). **N'appuyez pas sur le bouton principal** (« OK » / « Fermer »), qui annule l'installation. Appuyez sur **Plus de détails**, puis sur **Installer quand même**. Voir [#9](https://github.com/essensys-hub/essensys-android-phone-apps/issues/9).
+   - Sur Xiaomi (HyperOS/MIUI), un écran d'analyse de sécurité peut suivre : attendez la fin du compte à rebours, puis confirmez.
 4. Lancez **Essensys** et choisissez le mode de connexion :
    - **Cloud** (recommandé) : connectez-vous avec le compte de votre portail `mon.essensys.fr`.
    - **Réseau local** : à utiliser chez vous, sur le Wi-Fi de l'installation. Adresse par défaut : `https://mon.essensys.local`. À la première connexion, l'application affiche l'**empreinte du certificat de la gateway**. Comparez-la avec celle que vous a transmise l'installateur, puis confirmez seulement si elle est identique.

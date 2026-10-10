@@ -37,6 +37,11 @@ jobs:
       - name: Build + lint
         run: ./gradlew assembleDebug lintDebug --console=plain
 
+      - name: Contrôle de l'APK (signature v2, arm64-v8a) — NR-android-9
+        id: apk
+        continue-on-error: true
+        run: python3 scripts/check_release_apk.py app/build/outputs/apk/debug/app-debug.apk --junit .artifacts/apk-check/apk.xml
+
       - name: Tests unitaires
         id: unit
         continue-on-error: true
@@ -55,9 +60,9 @@ jobs:
           mkdir -p .artifacts
           set +e
           python3 .lifecycle/scripts/feature_lifecycle/nonreg_report.py \
-            --sources app/src \
+            --sources app/src scripts \
             --out .artifacts/nonreg.json --markdown .artifacts/nonreg.md \
-            app/build/test-results/testDebugUnitTest
+            app/build/test-results/testDebugUnitTest .artifacts/apk-check
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v7
@@ -72,4 +77,5 @@ jobs:
       - name: Échec si tests ou rapport NR en erreur
         run: |
           if [ "${{ steps.unit.outcome }}" != "success" ]; then echo "Tests unitaires en échec"; exit 1; fi
+          if [ "${{ steps.apk.outcome }}" != "success" ]; then echo "Contrôle de l'APK en échec (NR-android-9)"; exit 1; fi
           if [ "${{ steps.nonreg.outputs.exit_code }}" != "0" ]; then echo "Rapport NR en erreur"; exit 1; fi
