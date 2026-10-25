@@ -14,9 +14,9 @@
 
 ## 3. Scénarios (#13)
 
-- [ ] 3.1 `ScenarioRepository` cloud et LAN : liste, définition, bitmasks, lancement, restauration, enregistrement, en-tête dry-run partout ; vérifier par des tests unitaires (dont dry-run en LAN)
-- [ ] 3.2 Transposition des masques dans le bloc du scénario et refus local des indices hors bloc ; vérifier par `NR-android-15` (indice méta 605 dans le scénario 4 → 728)
-- [ ] 3.3 Écran Scénarios : liste 2 à 8, dernier lancé, Lancer, Réglages d'usine avec confirmation (2 à 6), éditeur à cases à cocher ; vérifier par des tests instrumentés (annuler la confirmation n'envoie rien)
+- [x] 3.1 `ScenarioRepository` cloud et LAN : liste, définition, bitmasks, lancement, restauration, enregistrement, en-tête dry-run partout ; vérifier par des tests unitaires (dont dry-run en LAN)
+- [x] 3.2 Transposition des masques dans le bloc du scénario et refus local des indices hors bloc ; vérifier par `NR-android-15` (indice méta 605 dans le scénario 4 → 728)
+- [x] 3.3 Écran Scénarios : liste 2 à 8, dernier lancé, Lancer, Réglages d'usine avec confirmation (2 à 6), éditeur à cases à cocher ; vérifier par des tests instrumentés (annuler la confirmation n'envoie rien)
 
 ## 4. Chauffe-eau, arrosage et alarme (#14)
 

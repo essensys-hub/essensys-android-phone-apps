@@ -1,5 +1,6 @@
 package com.essensys.android.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,12 +13,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.Window
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -45,6 +48,9 @@ import com.essensys.android.di.AppContainer
 import com.essensys.android.ui.components.StatusPill
 import com.essensys.android.ui.screens.ControlViewModel
 import com.essensys.android.ui.screens.Destination
+import com.essensys.android.ui.screens.Feature
+import com.essensys.android.ui.screens.ScenariosScreen
+import com.essensys.android.ui.screens.ScenariosViewModel
 import com.essensys.android.ui.screens.HeatingScreen
 import com.essensys.android.ui.screens.HeatingViewModel
 import com.essensys.android.ui.screens.HomeScreen
@@ -65,6 +71,7 @@ fun EssensysRoot(container: AppContainer) {
     val sessionVm: SessionViewModel = viewModel { SessionViewModel(container.sessionStore, container.auth, container.portal) }
     val controlVm: ControlViewModel = viewModel { ControlViewModel(container.control) }
     val heatingVm: HeatingViewModel = viewModel { HeatingViewModel(container.heating) }
+    val scenariosVm: ScenariosViewModel = viewModel { ScenariosViewModel(container.scenarios) }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     val link by sessionVm.link.collectAsStateWithLifecycle()
 
@@ -79,7 +86,7 @@ fun EssensysRoot(container: AppContainer) {
                     LaunchedEffect(session.mode, session.isAuthenticated) { sessionVm.refreshLink() }
                     when (val l = link) {
                         null -> Column(insets) { ScreenColumn { Text("Chargement…", color = Essensys.colors.textMuted) } }
-                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm)
+                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm)
                         else -> Column(insets) { LinkScreen(sessionVm, l) }
                     }
                 }
@@ -89,8 +96,15 @@ fun EssensysRoot(container: AppContainer) {
 }
 
 @Composable
-private fun MainScaffold(sessionVm: SessionViewModel, controlVm: ControlViewModel, heatingVm: HeatingViewModel) {
+private fun MainScaffold(
+    sessionVm: SessionViewModel,
+    controlVm: ControlViewModel,
+    heatingVm: HeatingViewModel,
+    scenariosVm: ScenariosViewModel,
+) {
     var destination by rememberSaveable { mutableStateOf(Destination.HOME) }
+    var feature by rememberSaveable { mutableStateOf<Feature?>(null) }
+    BackHandler(enabled = feature != null) { feature = null }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     val online by sessionVm.gatewayOnline.collectAsStateWithLifecycle()
     val lastAction by sessionVm.lastAction.collectAsStateWithLifecycle()
@@ -111,7 +125,12 @@ private fun MainScaffold(sessionVm: SessionViewModel, controlVm: ControlViewMode
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(destination.title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Essensys.colors.text)
+                    if (feature != null) {
+                        IconButton({ feature = null }, Modifier.testTag("back")) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Retour", tint = Essensys.colors.text)
+                        }
+                    }
+                    Text(feature?.title ?: destination.title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = Essensys.colors.text)
                     if (session.mode == ConnectionMode.LAN) {
                         StatusPill("Réseau local", Essensys.colors.primary, Modifier.testTag("status-lan"))
                     } else when (online) {
@@ -142,8 +161,8 @@ private fun MainScaffold(sessionVm: SessionViewModel, controlVm: ControlViewMode
             NavigationBar(containerColor = Essensys.colors.card) {
                 Destination.entries.forEach { d ->
                     NavigationBarItem(
-                        selected = d == destination,
-                        onClick = { destination = d },
+                        selected = d == destination && feature == null,
+                        onClick = { destination = d; feature = null },
                         icon = { Icon(d.icon(), contentDescription = null) },
                         label = { Text(d.label) },
                         modifier = Modifier.testTag("nav-${d.name}"),
@@ -153,8 +172,12 @@ private fun MainScaffold(sessionVm: SessionViewModel, controlVm: ControlViewMode
         },
     ) { padding ->
         Column(Modifier.padding(padding)) {
-            when (destination) {
-                Destination.HOME -> HomeScreen { destination = it }
+            val current = feature
+            if (current != null) when (current) {
+                Feature.SCENARIOS -> ScenariosScreen(scenariosVm, commandsEnabled)
+                Feature.WATER_HEATER, Feature.SPRINKLER, Feature.ALARM -> Unit
+            } else when (destination) {
+                Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it })
                 Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled)
                 Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true)
                 Destination.HEATING -> HeatingScreen(heatingVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)

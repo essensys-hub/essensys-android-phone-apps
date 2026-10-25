@@ -67,6 +67,27 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class HeatingSyncStarted(val status: String? = null, val sync: HeatingSyncStatus? = null)
 
+// Scénarios : cloud /api/portal/scenarios*, LAN /api/scenarios* (même format, handlers/scenarios.go).
+@Serializable data class ScenarioSlot(
+    @SerialName("slot_number") val slot: Int,
+    val label: String = "",
+    @SerialName("base_index") val baseIndex: Int = 0,
+    @SerialName("end_index") val endIndex: Int = 0,
+    val editable: Boolean = false,
+    @SerialName("last_launched") val lastLaunched: Int? = null,
+    val params: List<KeyValue> = emptyList(),
+)
+
+@Serializable data class ScenarioList(val slots: List<ScenarioSlot> = emptyList())
+
+@Serializable data class BitmaskBit(val bit: Int, val value: Int, val label: String)
+
+@Serializable data class BitmaskField(val index: Int, val name: String = "", val bits: List<BitmaskBit> = emptyList())
+
+@Serializable data class BitmaskMeta(val fields: List<BitmaskField> = emptyList())
+
+@Serializable data class ScenarioSaveRequest(val params: Map<String, String>)
+
 @Serializable data class LinkRequest(
     val id: Long? = null,
     @SerialName("machine_serial") val machineSerial: String? = null,

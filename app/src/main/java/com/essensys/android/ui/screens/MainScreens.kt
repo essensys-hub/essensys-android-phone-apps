@@ -42,11 +42,12 @@ fun ScreenColumn(content: @Composable ColumnScope.() -> Unit) {
 
 /** Accueil V1 : raccourcis et fonctions à venir, sans données fictives (design « Bientôt disponible »). */
 @Composable
-fun HomeScreen(onOpen: (Destination) -> Unit) {
+fun HomeScreen(onOpen: (Destination) -> Unit, onOpenFeature: (Feature) -> Unit) {
     ScreenColumn {
         EssensysCard(title = "Commandes", description = "Pilotez votre installation") {
             ActionButton("Éclairage", { onOpen(Destination.LIGHTING) }, Modifier.fillMaxWidth().testTag("open-lighting"))
             ActionButton("Volets & stores", { onOpen(Destination.SHUTTERS) }, Modifier.fillMaxWidth().testTag("open-shutters"))
+            ActionButton("Scénarios", { onOpenFeature(Feature.SCENARIOS) }, Modifier.fillMaxWidth().testTag("open-SCENARIOS"))
         }
         EssensysCard(title = "Bientôt disponible", description = "Prochaine version de l'application") {
             listOf("Chauffage", "Scénarios", "Chauffe-eau", "Arrosage", "Alarme").forEach {

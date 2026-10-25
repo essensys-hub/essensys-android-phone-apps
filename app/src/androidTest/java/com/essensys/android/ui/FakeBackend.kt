@@ -61,6 +61,7 @@ class FakeBackend(
                         """{"active":false,"startIndex":13,"byteCount":84,"received":84,"total":84,"chunksTotal":3,"chunksCompleted":3}""",
                     )
                     path == "/api/portal/web/actions" -> {
+                        mutationBodies += request.body?.utf8().orEmpty()
                         mutations += "${request.method} $path"
                         if (dryRun(request)) testOk() else json("""{"status":"ok","message":"Action sent to queue"}""")
                     }
@@ -77,8 +78,9 @@ class FakeBackend(
     var exchangeStale = false
     @Volatile var failNextInject = false
 
-    /** Mutations hors inject (scénarios, alarme) : « METHOD chemin ». */
+    /** Mutations hors inject (scénarios, alarme) : « METHOD chemin », et leurs corps dans le même ordre. */
     val mutations = CopyOnWriteArrayList<String>()
+    val mutationBodies = CopyOnWriteArrayList<String>()
 
     private fun scenarios(request: RecordedRequest, path: String): MockResponse {
         val rest = path.substringAfter("/scenarios").trim('/')
@@ -87,6 +89,7 @@ class FakeBackend(
             rest == "meta/bitmasks" -> json(fixture("scenario_bitmasks.json"))
             request.method == "GET" -> json(fixture("scenario_4.json"))
             else -> {
+                mutationBodies += request.body?.utf8().orEmpty()
                 mutations += "${request.method} $path"
                 if (dryRun(request)) testOk() else json("""{"status":"ok","guid":"g","guids":["g"],"slot":${rest.substringBefore('/')}}""")
             }
