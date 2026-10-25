@@ -3,6 +3,7 @@ package com.essensys.android.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.essensys.android.data.control.ControlRepository
+import com.essensys.android.data.control.IndexTable
 import com.essensys.android.data.control.InjectOutcome
 import com.essensys.android.data.control.Injection
 import com.essensys.android.data.http.ApiResult
@@ -42,6 +43,38 @@ class ControlViewModel(private val control: ControlRepository) : ViewModel() {
                     InjectOutcome.SENT -> Feedback("$label : commande envoyée — l'armoire exécute sous ~5 s", Feedback.Kind.SUCCESS)
                 }
                 is ApiResult.Err -> Feedback("$label : ${result.error.userMessage}", Feedback.Kind.ERROR)
+            }
+            _inFlight.update { it - key }
+        }
+        return true
+    }
+
+    /**
+     * Réglage du temps de course (spec shutter-travel-time) : valeur saisie validée (1–255), puis
+     * injection unique ; la valeur affichée devient celle envoyée si le serveur l'accepte.
+     * @return false si la saisie est refusée ou la commande déjà en vol.
+     */
+    fun saveTravelTime(shutter: IndexTable.Shutter, raw: String): Boolean {
+        val command = raw.trim().toIntOrNull()?.let(shutter::travelTimeCommand)
+        if (command == null) {
+            _feedback.value = Feedback("${shutter.name} : entre 1 et 255 secondes", Feedback.Kind.ERROR)
+            return false
+        }
+        val key = "time-${shutter.id}"
+        var accepted = false
+        _inFlight.update { current -> if (key in current) current else { accepted = true; current + key } }
+        if (!accepted) return false
+        _feedback.value = null
+        viewModelScope.launch {
+            val result = control.inject(command)
+            _feedback.value = when (result) {
+                is ApiResult.Ok -> {
+                    _travelTimes.update { it + (command.k to command.v) }
+                    if (result.value == InjectOutcome.DRY_RUN_OK) {
+                        Feedback("${shutter.name} : temps de course validé (test, non exécuté)", Feedback.Kind.INFO)
+                    } else Feedback("${shutter.name} : temps de course réglé à ${command.v} s", Feedback.Kind.SUCCESS)
+                }
+                is ApiResult.Err -> Feedback("${shutter.name} : ${result.error.userMessage}", Feedback.Kind.ERROR)
             }
             _inFlight.update { it - key }
         }
