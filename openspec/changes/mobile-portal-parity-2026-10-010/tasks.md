@@ -7,10 +7,10 @@
 
 ## 2. Chauffage (#12)
 
-- [ ] 2.1 `ScheduleCodec` (décodage, encodage, diff, copie d'un jour) porté de `scheduleCodec.ts` ; vérifier par `NR-android-13` (lundi 6 h Confort + 7 h Éco en Zone Jour → `k=16, v="33"`) et des tests de diff
-- [ ] 2.2 `HeatingRepository` cloud et LAN : lecture du planning, envoi séquentiel interruptible avec événements de progression, synchronisation LAN (`heating/sync`, statut toutes les 3 s, 90 s, 409 busy) ; vérifier par des tests unitaires dont l'échec du second lot
-- [ ] 2.3 Écran Chauffage : onglets de zones, grille 7 × 24 avec palette, « appliquer à toute la semaine », Annuler, Enregistrer avec compteur d'octets et de lots, progression, avertissement `stale` ; vérifier par un test instrumenté (modifier, enregistrer, lot reçu par le faux backend) et à 360 dp
-- [ ] 2.4 Mode immédiat par zone (Anticipé absent des salles de bain) ; vérifier par `NR-android-14` (`k=351, v="17"` pour forçage confort SdB1) et un test instrumenté
+- [x] 2.1 `ScheduleCodec` (décodage, encodage, diff, copie d'un jour) porté de `scheduleCodec.ts` ; vérifier par `NR-android-13` (lundi 6 h Confort + 7 h Éco en Zone Jour → `k=16, v="33"`) et des tests de diff
+- [x] 2.2 `HeatingRepository` cloud et LAN : lecture du planning, envoi séquentiel interruptible avec événements de progression, synchronisation LAN (`heating/sync`, statut toutes les 3 s, 90 s, 409 busy) ; vérifier par des tests unitaires dont l'échec du second lot
+- [x] 2.3 Écran Chauffage : onglets de zones, grille 7 × 24 avec palette, « appliquer à toute la semaine », Annuler, Enregistrer avec compteur d'octets et de lots, progression, avertissement `stale` ; vérifier par un test instrumenté (modifier, enregistrer, lot reçu par le faux backend) et à 360 dp
+- [x] 2.4 Mode immédiat par zone (Anticipé absent des salles de bain) ; vérifier par `NR-android-14` (`k=351, v="17"` pour forçage confort SdB1) et un test instrumenté
 
 ## 3. Scénarios (#13)
 

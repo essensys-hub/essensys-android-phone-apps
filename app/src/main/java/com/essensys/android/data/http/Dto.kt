@@ -54,6 +54,19 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class InjectBatchRequest(val params: List<KeyValue>)
 
+// Synchronisation du planning de chauffage, LAN seulement (essensys-server-backend handlers.go).
+@Serializable data class HeatingSyncRequest(val startIndex: Int, val byteCount: Int)
+
+@Serializable data class HeatingSyncStatus(
+    val active: Boolean = false,
+    val received: Int = 0,
+    val total: Int = 0,
+    val chunksTotal: Int = 0,
+    val chunksCompleted: Int = 0,
+)
+
+@Serializable data class HeatingSyncStarted(val status: String? = null, val sync: HeatingSyncStatus? = null)
+
 @Serializable data class LinkRequest(
     val id: Long? = null,
     @SerialName("machine_serial") val machineSerial: String? = null,

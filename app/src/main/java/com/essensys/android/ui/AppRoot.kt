@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.Window
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,6 +45,8 @@ import com.essensys.android.di.AppContainer
 import com.essensys.android.ui.components.StatusPill
 import com.essensys.android.ui.screens.ControlViewModel
 import com.essensys.android.ui.screens.Destination
+import com.essensys.android.ui.screens.HeatingScreen
+import com.essensys.android.ui.screens.HeatingViewModel
 import com.essensys.android.ui.screens.HomeScreen
 import com.essensys.android.ui.screens.LightingScreen
 import com.essensys.android.ui.screens.LinkScreen
@@ -61,6 +64,7 @@ import com.essensys.android.ui.theme.EssensysTheme
 fun EssensysRoot(container: AppContainer) {
     val sessionVm: SessionViewModel = viewModel { SessionViewModel(container.sessionStore, container.auth, container.portal) }
     val controlVm: ControlViewModel = viewModel { ControlViewModel(container.control) }
+    val heatingVm: HeatingViewModel = viewModel { HeatingViewModel(container.heating) }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     val link by sessionVm.link.collectAsStateWithLifecycle()
 
@@ -75,7 +79,7 @@ fun EssensysRoot(container: AppContainer) {
                     LaunchedEffect(session.mode, session.isAuthenticated) { sessionVm.refreshLink() }
                     when (val l = link) {
                         null -> Column(insets) { ScreenColumn { Text("Chargement…", color = Essensys.colors.textMuted) } }
-                        LinkState.Linked -> MainScaffold(sessionVm, controlVm)
+                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm)
                         else -> Column(insets) { LinkScreen(sessionVm, l) }
                     }
                 }
@@ -85,7 +89,7 @@ fun EssensysRoot(container: AppContainer) {
 }
 
 @Composable
-private fun MainScaffold(sessionVm: SessionViewModel, controlVm: ControlViewModel) {
+private fun MainScaffold(sessionVm: SessionViewModel, controlVm: ControlViewModel, heatingVm: HeatingViewModel) {
     var destination by rememberSaveable { mutableStateOf(Destination.HOME) }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     val online by sessionVm.gatewayOnline.collectAsStateWithLifecycle()
@@ -153,6 +157,7 @@ private fun MainScaffold(sessionVm: SessionViewModel, controlVm: ControlViewMode
                 Destination.HOME -> HomeScreen { destination = it }
                 Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled)
                 Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true)
+                Destination.HEATING -> HeatingScreen(heatingVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
                 Destination.SETTINGS -> SettingsScreen(sessionVm)
             }
         }
@@ -163,5 +168,6 @@ private fun Destination.icon() = when (this) {
     Destination.HOME -> Icons.Outlined.Home
     Destination.LIGHTING -> Icons.Outlined.Lightbulb
     Destination.SHUTTERS -> Icons.Outlined.Window
+    Destination.HEATING -> Icons.Outlined.Thermostat
     Destination.SETTINGS -> Icons.Outlined.Settings
 }

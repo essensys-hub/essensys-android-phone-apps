@@ -2,6 +2,7 @@ package com.essensys.android.di
 
 import com.essensys.android.data.auth.AuthRepository
 import com.essensys.android.data.control.ControlRepository
+import com.essensys.android.data.control.HeatingRepository
 import com.essensys.android.data.http.ApiCaller
 import com.essensys.android.data.http.HttpClientFactory
 import com.essensys.android.data.http.LanTrust
@@ -28,4 +29,11 @@ class AppContainer(
     val auth = AuthRepository(api, sessionStore)
     val control = ControlRepository(api, sessionStore, auth)
     val portal = PortalRepository(api, sessionStore, auth)
+    var heating = HeatingRepository(api, sessionStore, auth, control)
+        private set
+
+    /** Tests : périodes de synchronisation courtes (temps réel, pas de temps virtuel avec OkHttp). */
+    fun withHeatingSyncTiming(pollMs: Long, timeoutMs: Long) = apply {
+        heating = HeatingRepository(api, sessionStore, auth, control, pollMs, timeoutMs)
+    }
 }

@@ -95,13 +95,18 @@ object IndexTable {
 
     // --- Chauffage (spec heating-control) : `essensys-user-portal-frontend/src/heating/constants.ts` ---
 
-    /** Valeur d'un créneau horaire du planning (3 bits). */
-    enum class HeatingSlot(val value: Int, val label: String) {
-        OFF(0, "OFF"), CONFORT(1, "Confort"), ECO(2, "Éco"), ECO_PLUS(3, "Éco+"), ECO_PLUS_PLUS(4, "Éco++");
+    /**
+     * Valeur d'un créneau horaire du planning (3 bits). Hors gel (5) peut être lu dans l'armoire mais
+     * n'est pas proposé à l'édition, comme dans le portail : la grille garde la valeur brute pour ne
+     * jamais réécrire un créneau que l'utilisateur n'a pas touché.
+     */
+    enum class HeatingSlot(val value: Int, val label: String, val inPalette: Boolean = true) {
+        OFF(0, "OFF"), CONFORT(1, "Confort"), ECO(2, "Éco"), ECO_PLUS(3, "Éco+"), ECO_PLUS_PLUS(4, "Éco++"),
+        FROST(5, "Hors gel", inPalette = false);
 
         companion object {
-            /** Valeur inconnue ou hors palette (5 = hors gel, non proposé) : affichée OFF, comme le portail. */
-            fun of(value: Int) = entries.firstOrNull { it.value == value } ?: OFF
+            val palette = entries.filter { it.inPalette }
+            fun of(value: Int) = entries.firstOrNull { it.value == value }
         }
     }
 
@@ -139,7 +144,7 @@ object IndexTable {
         FORCE_ECO(18, "Forçage éco"),
         FORCE_ECO_PLUS(19, "Forçage éco+"),
         FORCE_ECO_PLUS_PLUS(20, "Forçage éco++"),
-        FROST(21, "Hors gel"),
+        FROST(21, "Forçage hors gel"),
         OFF(16, "OFF"),
     }
 

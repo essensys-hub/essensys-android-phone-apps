@@ -41,6 +41,7 @@ class FakeBackend(
                     path == "/api/portal/session" -> json(
                         """{"portal_access":true,"gateway":{"id":"gw-demo","hostname":"demo","online":$gatewayOnline}}""",
                     )
+                    path == "/api/user/me" -> json("""{"user":{"id":1,"email":"demo@essensys.fr","role":"admin"}}""")
                     path == "/api/portal/history/latest" -> json("""{"lastAction":null,"message":"No actions yet"}""")
                     path == "/api/portal/inject" || path == "/api/portal/inject/batch" || path == "/api/admin/inject" -> {
                         injections += request.body?.utf8().orEmpty()
@@ -57,7 +58,7 @@ class FakeBackend(
                         """{"status":"started","sync":{"active":true,"startIndex":13,"byteCount":84,"received":0,"total":84,"chunksTotal":3,"chunksCompleted":0}}""",
                     )
                     path == "/api/admin/heating/sync/status" -> json(
-                        """{"sync":{"active":false,"startIndex":13,"byteCount":84,"received":84,"total":84,"chunksTotal":3,"chunksCompleted":3}}""",
+                        """{"active":false,"startIndex":13,"byteCount":84,"received":84,"total":84,"chunksTotal":3,"chunksCompleted":3}""",
                     )
                     path == "/api/portal/web/actions" -> {
                         mutations += "${request.method} $path"
