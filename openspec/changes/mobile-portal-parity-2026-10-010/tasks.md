@@ -1,9 +1,9 @@
 ## 1. Socle data et tests (#11)
 
-- [ ] 1.1 Étendre `IndexTable` (zones de chauffage, modes immédiats, chauffe-eau 353, arrosage 363, formule de bloc des scénarios) ; vérifier par `IndexTableTest` et les tests `NR-android-10` (indices des zones) et `NR-android-11` (chauffe-eau et arrosage, aucun indice 400–402 ou 500–504)
-- [ ] 1.2 Ajouter au client HTTP la lecture `exchange` (cloud avec `stale`/`source`, LAN) et l'envoi par lots (cloud `inject/batch`, LAN `inject` en tableau) avec découpage à 30 ; vérifier par des tests `MockWebServer` (découpage 40 → 30 + 10 = `NR-android-12`)
-- [ ] 1.3 Étendre `NoArmoireInterceptor` aux routes `inject/batch`, `web/actions`, `scenarios/*` et `heating/sync` ; vérifier par un test qui échoue sur chaque route vers `mon.essensys.fr`
-- [ ] 1.4 Étendre le faux backend instrumenté et les fixtures JSON (exchange, scenarios, bitmasks, test_ok, 409 busy, 429) ; vérifier qu'un test instrumenté existant passe toujours
+- [x] 1.1 Étendre `IndexTable` (zones de chauffage, modes immédiats, chauffe-eau 353, arrosage 363, formule de bloc des scénarios) ; vérifier par `IndexTableTest` et les tests `NR-android-10` (indices des zones) et `NR-android-11` (chauffe-eau et arrosage, aucun indice 400–402 ou 500–504)
+- [x] 1.2 Ajouter au client HTTP la lecture `exchange` (cloud avec `stale`/`source`, LAN) et l'envoi par lots (cloud `inject/batch`, LAN `inject` en tableau) avec découpage à 30 ; vérifier par des tests `MockWebServer` (découpage 40 → 30 + 10 = `NR-android-12`)
+- [x] 1.3 Étendre `NoArmoireInterceptor` aux routes `inject/batch`, `web/actions`, `scenarios/*` et `heating/sync` ; vérifier par un test qui échoue sur chaque route vers `mon.essensys.fr`
+- [x] 1.4 Étendre le faux backend instrumenté et les fixtures JSON (exchange, scenarios, bitmasks, test_ok, 409 busy, 429) ; vérifier qu'un test instrumenté existant passe toujours
 
 ## 2. Chauffage (#12)
 

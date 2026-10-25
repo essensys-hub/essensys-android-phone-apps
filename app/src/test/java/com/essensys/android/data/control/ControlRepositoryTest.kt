@@ -80,6 +80,58 @@ class ControlRepositoryTest {
         }
     }
 
+    // NR: NR-android-12 essensys-hub/essensys-android-phone-apps#11
+    @Test
+    fun batch_is_split_into_chunks_of_thirty_NR_android_12() = runTest {
+        val params = (13 until 53).map { Injection(it, "17") } // 40 octets
+        val chunks = IndexTable.chunk(params)
+        assertEquals(listOf(30, 10), chunks.map { it.size })
+        assertEquals(params, chunks.flatten()) // ordre conservé
+        TestServer(token = "jwt").use { t ->
+            t.enqueue(200, t.fixture("inject_batch_ok.json"))
+            assertEquals(ApiResult.Ok(InjectOutcome.SENT), t.container.control.injectBatch(chunks[1]))
+            val request = t.server.takeRequest()
+            assertEquals("/api/portal/inject/batch", request.url.encodedPath)
+            assertEquals(
+                """{"params":[""" + (43 until 53).joinToString(",") { """{"k":$it,"v":"17"}""" } + "]}",
+                request.body!!.utf8(),
+            )
+        }
+    }
+
+    @Test
+    fun lan_batch_posts_array_to_admin_inject() = runTest {
+        TestServer(mode = ConnectionMode.LAN).use { t ->
+            t.store.update { it.copy(lanCookie = "abc") }
+            t.enqueue(200, t.fixture("lan_inject_ok.json"))
+            t.container.control.injectBatch(listOf(Injection(13, "33"), Injection(14, "0")))
+            val request = t.server.takeRequest()
+            assertEquals("/api/admin/inject", request.url.encodedPath)
+            assertEquals("""[{"k":13,"v":"33"},{"k":14,"v":"0"}]""", request.body!!.utf8())
+        }
+    }
+
+    @Test
+    fun batch_over_firmware_limit_is_refused_locally() = runTest {
+        TestServer(token = "jwt").use { t ->
+            val tooMany = (13 until 44).map { Injection(it, "0") }
+            assertTrue(runCatching { t.container.control.injectBatch(tooMany) }.isFailure)
+            assertEquals(0, t.server.requestCount)
+        }
+    }
+
+    @Test
+    fun stale_or_empty_cloud_cache_is_flagged() = runTest {
+        TestServer(token = "jwt").use { t ->
+            t.enqueue(200, t.fixture("exchange_stale.json"))
+            t.enqueue(200, t.fixture("exchange_none.json"))
+            val stale = t.container.control.readExchangeSnapshot(listOf(13)) as ApiResult.Ok
+            assertEquals(ExchangeSnapshot(mapOf(13 to "17"), stale = true), stale.value)
+            val none = t.container.control.readExchangeSnapshot(listOf(13)) as ApiResult.Ok
+            assertTrue(none.value.stale)
+        }
+    }
+
     // NR: NR-android-4 essensys-hub/essensys-android-phone-apps#3
     @Test
     fun no_demo_fallback_when_server_unreachable_NR_android_4() = runTest {

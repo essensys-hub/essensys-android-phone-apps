@@ -1,0 +1,12 @@
+{
+  "status": "started",
+  "sync": {
+    "active": true,
+    "startIndex": 13,
+    "byteCount": 84,
+    "received": 0,
+    "total": 84,
+    "chunksTotal": 3,
+    "chunksCompleted": 0
+  }
+}

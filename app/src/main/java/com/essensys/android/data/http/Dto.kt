@@ -46,7 +46,13 @@ import kotlinx.serialization.Serializable
     val message: String? = null,
 )
 
-@Serializable data class ExchangeResponse(val values: List<KeyValue> = emptyList(), val stale: Boolean = false)
+@Serializable data class ExchangeResponse(
+    val values: List<KeyValue> = emptyList(),
+    val stale: Boolean = false,
+    val source: String? = null,
+)
+
+@Serializable data class InjectBatchRequest(val params: List<KeyValue>)
 
 @Serializable data class LinkRequest(
     val id: Long? = null,

@@ -56,6 +56,9 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+
+    // Fixtures JSON partagées entre tests unitaires et instrumentés (FakeBackend).
+    sourceSets.getByName("androidTest").resources.srcDir("src/test/resources")
 }
 
 dependencies {

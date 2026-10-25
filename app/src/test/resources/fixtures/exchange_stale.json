@@ -1,0 +1,11 @@
+{
+  "values": [
+    {
+      "k": 13,
+      "v": "17"
+    }
+  ],
+  "stale": true,
+  "source": "gateway_cache",
+  "updated_at": "2026-10-24T08:00:00Z"
+}

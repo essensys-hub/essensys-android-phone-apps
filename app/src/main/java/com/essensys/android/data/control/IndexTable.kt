@@ -92,6 +92,109 @@ object IndexTable {
 
     /** Temps de course : indices 566–589, valeur 1–255 secondes. */
     val travelTimeRange = 1..255
+
+    // --- Chauffage (spec heating-control) : `essensys-user-portal-frontend/src/heating/constants.ts` ---
+
+    /** Valeur d'un créneau horaire du planning (3 bits). */
+    enum class HeatingSlot(val value: Int, val label: String) {
+        OFF(0, "OFF"), CONFORT(1, "Confort"), ECO(2, "Éco"), ECO_PLUS(3, "Éco+"), ECO_PLUS_PLUS(4, "Éco++");
+
+        companion object {
+            /** Valeur inconnue ou hors palette (5 = hors gel, non proposé) : affichée OFF, comme le portail. */
+            fun of(value: Int) = entries.firstOrNull { it.value == value } ?: OFF
+        }
+    }
+
+    data class HeatingZone(
+        val id: String,
+        val name: String,
+        val scheduleStart: Int,
+        val modeIndex: Int,
+        val allowsAnticipated: Boolean,
+    ) {
+        val scheduleIndices: IntRange get() = scheduleStart until scheduleStart + SCHEDULE_BYTES
+        fun immediateModes() = ImmediateMode.entries.filter { allowsAnticipated || it != ImmediateMode.ANTICIPATED }
+        fun command(mode: ImmediateMode): Injection {
+            require(mode in immediateModes()) { "${mode.label} non proposé pour $name" }
+            return Injection(modeIndex, mode.value.toString())
+        }
+    }
+
+    /** 7 jours × 12 octets (2 heures par octet). */
+    const val SCHEDULE_BYTES = 84
+    const val SCHEDULE_BYTES_PER_DAY = 12
+
+    val heatingZones: List<HeatingZone> = listOf(
+        HeatingZone("jour", "Zone Jour", scheduleStart = 13, modeIndex = 349, allowsAnticipated = true),
+        HeatingZone("nuit", "Zone Nuit", scheduleStart = 97, modeIndex = 350, allowsAnticipated = true),
+        HeatingZone("sdb1", "Salle de bain 1", scheduleStart = 181, modeIndex = 351, allowsAnticipated = false),
+        HeatingZone("sdb2", "Salle de bain 2", scheduleStart = 265, modeIndex = 352, allowsAnticipated = false),
+    )
+
+    /** Mode immédiat (`Chauf_*_Mode`) : b0–b3 consigne, b4–b5 automatique / forcé / anticipé. */
+    enum class ImmediateMode(val value: Int, val label: String) {
+        AUTO(1, "Automatique (planning)"),
+        ANTICIPATED(32, "Anticipé"),
+        FORCE_CONFORT(17, "Forçage confort"),
+        FORCE_ECO(18, "Forçage éco"),
+        FORCE_ECO_PLUS(19, "Forçage éco+"),
+        FORCE_ECO_PLUS_PLUS(20, "Forçage éco++"),
+        FROST(21, "Hors gel"),
+        OFF(16, "OFF"),
+    }
+
+    // --- Chauffe-eau et arrosage (spec comfort-controls) : indices du firmware `TableEchange.h` ---
+    // Le portail envoie 400–402 et 500–504 (absents du firmware) : NE PAS les reprendre (design D3).
+
+    const val WATER_HEATER_INDEX = 353 // Cumulus_Mode
+    const val SPRINKLER_INDEX = 363 // Arrose_Mode
+
+    enum class WaterHeaterMode(val value: Int, val label: String) {
+        AUTONOMOUS(0, "Autonome (marche permanente)"),
+        OFF_PEAK(1, "Heures creuses"),
+        OFF(2, "Arrêt");
+
+        fun command() = Injection(WATER_HEATER_INDEX, value.toString())
+    }
+
+    enum class SprinklerMode(val value: Int, val label: String) {
+        AUTO(255, "Automatique"),
+        MINUTES_15(15, "15 minutes"),
+        MINUTES_30(30, "30 minutes"),
+        MINUTES_60(60, "60 minutes"),
+        OFF(0, "Arrêt");
+
+        fun command() = Injection(SPRINKLER_INDEX, value.toString())
+    }
+
+    // --- Scénarios (spec scenarios) : `essensys-user-portal-backend/internal/domain/scenario/indices.go` ---
+
+    const val SCENARIO_FIRST_BASE = 592
+    const val SCENARIO_SIZE = 41
+    val scenarioSlots = 2..8
+    val restorableScenarioSlots = 2..6
+
+    fun scenarioBlock(slot: Int): IntRange {
+        val base = SCENARIO_FIRST_BASE + (slot - 1) * SCENARIO_SIZE
+        return base until base + SCENARIO_SIZE
+    }
+
+    /**
+     * Les métadonnées `meta/bitmasks` décrivent les indices du scénario 1 (605, 606…) : on les
+     * transpose dans le bloc du scénario édité (design D6). Un indice déjà dans le bloc est conservé.
+     */
+    fun shiftIntoScenario(metaIndex: Int, slot: Int): Int {
+        val block = scenarioBlock(slot)
+        if (metaIndex in block) return metaIndex
+        val offset = metaIndex - SCENARIO_FIRST_BASE
+        require(offset in 0 until SCENARIO_SIZE) { "indice $metaIndex hors du bloc du scénario 1" }
+        return block.first + offset
+    }
+
+    /** Limite firmware : 30 paramètres au plus par action (`heating/injectLimits.ts`). */
+    const val MAX_PARAMS_PER_ACTION = 30
+
+    fun <T> chunk(params: List<T>, size: Int = MAX_PARAMS_PER_ACTION): List<List<T>> = params.chunked(size)
 }
 
 /** Une écriture dans la table d'échange : `{"k": <int>, "v": "<string>"}`. */

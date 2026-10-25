@@ -1,0 +1,61 @@
+{
+  "slots": [
+    {
+      "slot_number": 1,
+      "label": "Serveur",
+      "base_index": 592,
+      "end_index": 632,
+      "editable": false
+    },
+    {
+      "slot_number": 2,
+      "label": "Je sors",
+      "base_index": 633,
+      "end_index": 673,
+      "editable": true,
+      "last_launched": 2
+    },
+    {
+      "slot_number": 3,
+      "label": "Je pars en vacances",
+      "base_index": 674,
+      "end_index": 714,
+      "editable": true
+    },
+    {
+      "slot_number": 4,
+      "label": "Je rentre",
+      "base_index": 715,
+      "end_index": 755,
+      "editable": true
+    },
+    {
+      "slot_number": 5,
+      "label": "Je vais me coucher",
+      "base_index": 756,
+      "end_index": 796,
+      "editable": true
+    },
+    {
+      "slot_number": 6,
+      "label": "Je me lève",
+      "base_index": 797,
+      "end_index": 837,
+      "editable": true
+    },
+    {
+      "slot_number": 7,
+      "label": "Personnalisé 1",
+      "base_index": 838,
+      "end_index": 878,
+      "editable": true
+    },
+    {
+      "slot_number": 8,
+      "label": "Personnalisé 2",
+      "base_index": 879,
+      "end_index": 919,
+      "editable": true
+    }
+  ]
+}
