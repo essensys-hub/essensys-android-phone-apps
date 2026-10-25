@@ -80,6 +80,14 @@ class HeatingFlowTest {
         assertEquals(backend.injections[0], backend.injections[1])
     }
 
+    @Test
+    fun heating_screen_renders_in_dark_theme() {
+        backend.exchange.putAll((13..96).associateWith { "18" }) // Confort / Éco alternés
+        openHeating(SessionState(token = "jwt-test", theme = com.essensys.android.ui.theme.ThemePreference.DARK))
+        compose.waitUntil(5_000) { exists("hour-0") }
+        screenshot("13-heating-dark")
+    }
+
     // Spec : forçage confort en salle de bain 1 = k=351, v="17" ; Anticipé absent des salles de bain.
     @Test
     fun immediate_mode_for_bathroom_sends_mode_index() {

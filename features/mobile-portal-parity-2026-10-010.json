@@ -2,7 +2,7 @@
   "$schema": "./schema/feature.schema.json",
   "id": "mobile-portal-parity-2026-10-010",
   "title": "Compléter les apps Android et iPhone pour atteindre la parité avec le portail (v2.1.0)",
-  "status": "proposed",
+  "status": "in-progress",
   "owner": "rhinosys",
   "github": {
     "issue": "essensys-hub/essensys-feature-lifecycle#35",
@@ -29,16 +29,27 @@
   },
   "implementation": {
     "paths": [
-      "app/src/main/java/com/essensys/android/data/control/ControlRepository.kt",
       "app/src/main/java/com/essensys/android/data/control/IndexTable.kt",
-      "app/src/main/java/com/essensys/android/data/http/ApiCaller.kt",
+      "app/src/main/java/com/essensys/android/data/control/ControlRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/ScheduleCodec.kt",
+      "app/src/main/java/com/essensys/android/data/control/HeatingRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/ScenarioRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/ComfortRepository.kt",
+      "app/src/main/java/com/essensys/android/data/http/ApiResult.kt",
       "app/src/main/java/com/essensys/android/data/http/Dto.kt",
       "app/src/main/java/com/essensys/android/data/http/NoArmoireInterceptor.kt",
+      "app/src/main/java/com/essensys/android/data/session/PortalRepository.kt",
       "app/src/main/java/com/essensys/android/di/AppContainer.kt",
       "app/src/main/java/com/essensys/android/ui/AppRoot.kt",
-      "app/src/main/java/com/essensys/android/ui/components/Components.kt",
       "app/src/main/java/com/essensys/android/ui/screens/Destination.kt",
       "app/src/main/java/com/essensys/android/ui/screens/MainScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/SessionViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/HeatingScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/HeatingViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ScenariosScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ScenariosViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ComfortScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ComfortViewModel.kt",
       "app/build.gradle.kts"
     ],
     "primary_surface": "android"
@@ -50,7 +61,11 @@
     "language": "fr",
     "i18n_keys": [],
     "screenshots": [
-      "img/v2/02-home-light.png"
+      "img/v2/02-home-light.png",
+      "img/v2/09-heating-light.png",
+      "img/v2/13-heating-dark.png",
+      "img/v2/11-scenarios-light.png",
+      "img/v2/12-water-heater-light.png"
     ]
   },
   "tests": {
@@ -68,17 +83,25 @@
       "alarm code is never logged or stored",
       "alarm is cloud only",
       "no armoire guard blocks new mutation routes",
-      "commands disabled when armoire offline"
+      "offline disables quick scenarios but tiles stay open"
     ],
     "smoke_tags": [
       "@nr"
     ],
     "junit": [
-      "app/src/androidTest/java/com/essensys/android/ui/AppFlowTest.kt",
-      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt",
-      "app/src/test/java/com/essensys/android/data/control/ControlRepositoryTest.kt",
       "app/src/test/java/com/essensys/android/data/control/IndexTableTest.kt",
-      "app/src/test/java/com/essensys/android/data/http/NoArmoireInterceptorTest.kt"
+      "app/src/test/java/com/essensys/android/data/control/ControlRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ScheduleCodecTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/HeatingRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ScenarioRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ComfortRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/http/NoArmoireInterceptorTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/HeatingFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/ScenariosFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/ComfortFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/HomeFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/AppFlowTest.kt"
     ]
   },
   "release": {

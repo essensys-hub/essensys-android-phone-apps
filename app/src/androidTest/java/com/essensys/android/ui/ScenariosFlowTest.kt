@@ -1,5 +1,11 @@
 package com.essensys.android.ui
 
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onRoot
+import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -25,6 +31,13 @@ class ScenariosFlowTest {
 
     @After fun tearDown() = backend.close()
 
+    private fun screenshot(name: String) {
+        val dir = File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "screens").apply { mkdirs() }
+        File(dir, "$name.png").outputStream().use {
+            compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+    }
+
     private fun exists(tag: String) = runCatching { compose.onNodeWithTag(tag).assertExists() }.isSuccess
 
     private fun openScenarios() {
@@ -38,6 +51,7 @@ class ScenariosFlowTest {
     fun launch_je_sors_and_back_to_home() {
         openScenarios()
         compose.onNodeWithTag("last-2").assertExists()
+        screenshot("11-scenarios-light")
         compose.onNodeWithTag("launch-2").performScrollTo().performClick()
         compose.waitUntil(5_000) { backend.mutations.isNotEmpty() }
         assertEquals(listOf("POST /api/portal/scenarios/2/launch"), backend.mutations.toList())

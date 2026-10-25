@@ -52,9 +52,9 @@ class HomeFlowTest {
         assertEquals(listOf("HOME", "LIGHTING", "SHUTTERS", "HEATING", "SETTINGS"), Destination.entries.map { it.name })
         Destination.entries.forEach { compose.onNodeWithTag("nav-${it.name}").assertExists() }
         assertTrue(compose.onAllNodesWithText("Bientôt disponible").fetchSemanticsNodes().isEmpty())
+        screenshot("02-home-light")
         listOf("open-lighting", "open-shutters", "open-heating", "open-SCENARIOS", "open-WATER_HEATER", "open-SPRINKLER", "open-ALARM")
             .forEach { compose.onNodeWithTag(it).performScrollTo().assertExists() }
-        screenshot("02-home-light")
     }
 
     @Test

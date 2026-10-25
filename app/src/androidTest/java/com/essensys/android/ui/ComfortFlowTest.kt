@@ -1,5 +1,11 @@
 package com.essensys.android.ui
 
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onRoot
+import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -27,6 +33,13 @@ class ComfortFlowTest {
 
     @After fun tearDown() = backend.close()
 
+    private fun screenshot(name: String) {
+        val dir = File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "screens").apply { mkdirs() }
+        File(dir, "$name.png").outputStream().use {
+            compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+    }
+
     private fun exists(tag: String) = runCatching { compose.onNodeWithTag(tag).assertExists() }.isSuccess
 
     private fun open(feature: String, state: SessionState = SessionState(token = "jwt-test")) {
@@ -40,6 +53,7 @@ class ComfortFlowTest {
         backend.exchange[353] = "2"
         open("WATER_HEATER")
         compose.waitUntil(5_000) { exists("heater-OFF_PEAK") }
+        screenshot("12-water-heater-light")
         compose.onNodeWithTag("heater-OFF_PEAK").performClick()
         compose.waitUntil(5_000) { backend.injections.isNotEmpty() }
         assertEquals("""{"k":353,"v":"1"}""", backend.injections.single())

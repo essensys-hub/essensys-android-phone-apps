@@ -35,5 +35,5 @@
 
 - [ ] 6.1 CI verte sur la PR (build, lint, unitaires, NR) et rapport NR consolidé avec `NR-android-10` à `NR-android-16` ; vérifier sur le run GitHub
 - [ ] 6.2 `/checkup essensys-android-phone-apps` vert, captures clair et sombre des nouveaux écrans postées sur #35
-- [ ] 6.3 README (fonctionnalités, captures) mis à jour et `versionName` 2.1.0 ; vérifier le rendu du README
+- [x] 6.3 README (fonctionnalités, captures) mis à jour et `versionName` 2.1.0 ; vérifier le rendu du README
 - [ ] 6.4 Release `android-v2.1.0` signée par `release.yml` ; vérifier la release GitHub et son SHA-256

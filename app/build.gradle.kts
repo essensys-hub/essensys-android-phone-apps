@@ -14,7 +14,7 @@ android {
         targetSdk = 36
         // Fournis par release.yml depuis le tag android-vX.Y.Z ; valeurs locales par défaut.
         versionCode = System.getenv("ESSENSYS_VERSION_CODE")?.toInt() ?: 2
-        versionName = System.getenv("ESSENSYS_VERSION_NAME") ?: "2.0.0-dev"
+        versionName = System.getenv("ESSENSYS_VERSION_NAME") ?: "2.1.0-dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
