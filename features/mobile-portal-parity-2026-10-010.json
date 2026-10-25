@@ -24,7 +24,8 @@
       "openspec/changes/mobile-portal-parity-2026-10-010/specs/heating-control/spec.md",
       "openspec/changes/mobile-portal-parity-2026-10-010/specs/home-dashboard/spec.md",
       "openspec/changes/mobile-portal-parity-2026-10-010/specs/parity-quality/spec.md",
-      "openspec/changes/mobile-portal-parity-2026-10-010/specs/scenarios/spec.md"
+      "openspec/changes/mobile-portal-parity-2026-10-010/specs/scenarios/spec.md",
+      "openspec/changes/mobile-portal-parity-2026-10-010/specs/shutter-travel-time/spec.md"
     ]
   },
   "implementation": {
@@ -50,7 +51,9 @@
       "app/src/main/java/com/essensys/android/ui/screens/ScenariosViewModel.kt",
       "app/src/main/java/com/essensys/android/ui/screens/ComfortScreens.kt",
       "app/src/main/java/com/essensys/android/ui/screens/ComfortViewModel.kt",
-      "app/build.gradle.kts"
+      "app/build.gradle.kts",
+      "app/src/main/java/com/essensys/android/ui/screens/ControlViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ShuttersScreen.kt"
     ],
     "primary_surface": "android"
   },
@@ -83,7 +86,8 @@
       "alarm code is never logged or stored",
       "alarm is cloud only",
       "no armoire guard blocks new mutation routes",
-      "offline disables quick scenarios but tiles stay open"
+      "offline disables quick scenarios but tiles stay open",
+      "travel time command uses shutter index and range"
     ],
     "smoke_tags": [
       "@nr"
@@ -101,7 +105,8 @@
       "app/src/androidTest/java/com/essensys/android/ui/ScenariosFlowTest.kt",
       "app/src/androidTest/java/com/essensys/android/ui/ComfortFlowTest.kt",
       "app/src/androidTest/java/com/essensys/android/ui/HomeFlowTest.kt",
-      "app/src/androidTest/java/com/essensys/android/ui/AppFlowTest.kt"
+      "app/src/androidTest/java/com/essensys/android/ui/AppFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/TravelTimeFlowTest.kt"
     ]
   },
   "release": {

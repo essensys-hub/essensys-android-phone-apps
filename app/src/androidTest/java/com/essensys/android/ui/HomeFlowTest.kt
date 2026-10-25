@@ -72,6 +72,8 @@ class HomeFlowTest {
     @Test
     fun quick_scenario_launches_in_one_tap() {
         start()
+        // Le bouton n'est actif qu'une fois l'état « en ligne » reçu : on l'attend avant d'appuyer.
+        compose.waitUntil(5_000) { exists("status-online") }
         compose.onNodeWithTag("quick-2").performClick()
         compose.waitUntil(5_000) { backend.mutations.isNotEmpty() }
         assertEquals("POST /api/portal/scenarios/2/launch", backend.mutations.single())

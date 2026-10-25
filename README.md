@@ -17,7 +17,7 @@ Certificat de signature officiel (SHA-256) : `A0:96:0E:61:21:9C:E1:0A:40:81:92:C
 - **Liaison de l'armoire** : un compte sans armoire liée peut demander la liaison depuis l'application.
 - **Accueil** : scénarios rapides (Je sors, Je rentre, Je vais me coucher, Je me lève) et une tuile par fonction.
 - **Éclairage** : par pièce, éclairage principal et indirect, « tout allumer » et « tout éteindre ».
-- **Volets et stores** : par volet, par groupe ou tous, avec le temps de course configuré.
+- **Volets et stores** : par volet, par groupe ou tous ; temps de course de chaque volet affiché et réglable (1 à 255 secondes).
 - **Chauffage** : planning hebdomadaire des 4 zones (jour, nuit, salles de bain), modifiable heure par heure, et mode immédiat (automatique, anticipé, forçages, hors gel, arrêt). En réseau local, le planning peut être relu directement depuis l'armoire.
 - **Scénarios** : lancement des scénarios 2 à 8, retour aux réglages d'usine (2 à 6) et choix des lumières et volets commandés.
 - **Chauffe-eau** : marche permanente, heures creuses ou arrêt.

@@ -131,6 +131,25 @@ class IndexTableTest {
         assert(sent.none { it in 400..402 || it in 500..504 }) { sent }
     }
 
+    // NR: NR-android-17 essensys-hub/essensys-android-phone-apps#18
+    @Test
+    fun travel_time_command_uses_shutter_index_and_range_NR_android_17() {
+        val salon1 = IndexTable.shutters.first { it.id == "volet1salon" }
+        assertEquals(Injection(566, "30"), salon1.travelTimeCommand(30))
+        assertEquals(Injection(585, "255"), IndexTable.shutters.first { it.id == "store" }.travelTimeCommand(255))
+        assertEquals(Injection(566, "1"), salon1.travelTimeCommand(1))
+        assertEquals(null, salon1.travelTimeCommand(0))
+        assertEquals(null, salon1.travelTimeCommand(256))
+        // Mêmes indices que le portail (ShuttersPage.tsx, timeIndex).
+        val golden = mapOf(
+            "volet1salon" to 566, "volet2salon" to 567, "volet3salon" to 568, "volet1salleamanger" to 569,
+            "volet2salleamanger" to 570, "voletbureau" to 571, "voletstore" to 572, "volet1gdchamb" to 574,
+            "volet2gdchamb" to 575, "volet1ptchamb" to 576, "volet2ptchamb" to 577, "volet3ptchamb" to 578,
+            "volet1cuisine" to 582, "volet2cuisine" to 583, "voletsdb" to 584, "store" to 585,
+        )
+        assertEquals(golden, IndexTable.shutters.associate { it.id to it.travelTimeCommand(30)!!.k })
+    }
+
     @Test
     fun scenario_blocks_follow_backend_layout() {
         assertEquals(592..632, IndexTable.scenarioBlock(1).first..IndexTable.scenarioBlock(1).last)

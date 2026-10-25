@@ -13,6 +13,7 @@ L'app v2.0.0 ne couvre que l'éclairage et les volets. Le chauffage, les scénar
 - **Chauffe-eau** : modes autonome, heures creuses et OFF.
 - **Arrosage** : automatique, forcé 15, 30 ou 60 minutes, OFF.
 - **Alarme** : mise en service et arrêt avec le code à 4 chiffres, en cloud seulement. Le code n'est jamais stocké ni journalisé par l'app.
+- **Temps de course des volets** (ajout du 2026-10-25) : réglage de 1 à 255 secondes par volet et store, comme la carte « Temps de course » du portail ; la v2.0.0 ne faisait que l'afficher.
 - **Accueil** : la carte « Bientôt disponible » est remplacée par des raccourcis vers toutes les fonctions et par les scénarios rapides. La navigation passe de 4 à 5 onglets (Chauffage ajouté).
 - **Indices du firmware, pas du portail**, pour le chauffe-eau et l'arrosage : le portail envoie les indices 400–402 et 500–504, qui n'existent pas dans `TableEchange.h`. Les apps envoient `Cumulus_Mode` (353, valeurs 0/1/2) et `Arrose_Mode` (363, valeurs 0, 1–254 minutes, 255 automatique). Le défaut du portail fait l'objet d'un ticket séparé.
 - **Hors périmètre** : notifications SMS et email (page factice dans le portail, aucun backend), UniFi Protect (LAN seulement, sans route dans le portail cloud), écrans d'administration et de supervision, date de fin de vacances, widgets, push, Siri et raccourcis système.
@@ -26,6 +27,7 @@ L'app v2.0.0 ne couvre que l'éclairage et les volets. Le chauffage, les scénar
 - `scenarios` : liste, lancement, retour aux réglages d'usine et édition des scénarios 2 à 8.
 - `comfort-controls` : modes du chauffe-eau et de l'arrosage.
 - `alarm-control` : mise en service et arrêt de l'alarme par code, traitement du code.
+- `shutter-travel-time` : réglage du temps de course de chaque volet (indices 566–589), plage 1–255 s, valeur actuelle.
 - `home-dashboard` : accueil, raccourcis, scénarios rapides et navigation à 5 onglets.
 - `parity-quality` : tests unitaires, tests applicatifs, non-régression `NR-android-*` alignés sur l'iPhone, garde no-armoire, checkup et livraison 2.1.0.
 

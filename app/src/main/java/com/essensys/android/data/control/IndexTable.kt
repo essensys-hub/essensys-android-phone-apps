@@ -33,6 +33,10 @@ object IndexTable {
         val travelTimeIndex: Int,
     ) {
         fun command(open: Boolean) = Injection(if (open) openIndex else closeIndex, mask.toString())
+
+        /** Temps de course (spec shutter-travel-time) ; null hors de [travelTimeRange]. */
+        fun travelTimeCommand(seconds: Int): Injection? =
+            if (seconds in travelTimeRange) Injection(travelTimeIndex, seconds.toString()) else null
     }
 
     val lights: List<Light> = listOf(
