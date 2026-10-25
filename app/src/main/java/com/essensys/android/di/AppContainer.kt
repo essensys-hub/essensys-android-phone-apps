@@ -1,6 +1,7 @@
 package com.essensys.android.di
 
 import com.essensys.android.data.auth.AuthRepository
+import com.essensys.android.data.control.ComfortRepository
 import com.essensys.android.data.control.ControlRepository
 import com.essensys.android.data.control.HeatingRepository
 import com.essensys.android.data.control.ScenarioRepository
@@ -31,6 +32,7 @@ class AppContainer(
     val control = ControlRepository(api, sessionStore, auth)
     val portal = PortalRepository(api, sessionStore, auth)
     val scenarios = ScenarioRepository(api, sessionStore, auth)
+    val comfort = ComfortRepository(api, sessionStore, auth, control)
     var heating = HeatingRepository(api, sessionStore, auth, control)
         private set
 

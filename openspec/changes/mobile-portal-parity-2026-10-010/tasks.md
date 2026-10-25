@@ -20,10 +20,10 @@
 
 ## 4. Chauffe-eau, arrosage et alarme (#14)
 
-- [ ] 4.1 Écrans Chauffe-eau et Arrosage avec mode actuel lu dans `exchange` ou « Mode actuel inconnu » ; vérifier par des tests instrumentés (`k=353, v="1"`, `k=363, v="30"`)
-- [ ] 4.2 Écran Alarme cloud (code à 4 chiffres masqué, confirmation de l'arrêt, rappel de boucle ouverte) et message « cloud seulement » en LAN ; vérifier par des tests instrumentés en cloud et en LAN
-- [ ] 4.3 Protection du code : pas de stockage ni d'état restauré, effacement après envoi et à `ON_STOP`, corps masqué dans les journaux, `validated_params` non affiché ; vérifier par `NR-android-16` (code absent des journaux et du stockage)
-- [ ] 4.4 Masquer l'écran Alarme en release derrière un drapeau tant que la mise en service n'est pas validée par un humain sur le banc BP ; vérifier que la build release n'affiche pas la tuile Alarme
+- [x] 4.1 Écrans Chauffe-eau et Arrosage avec mode actuel lu dans `exchange` ou « Mode actuel inconnu » ; vérifier par des tests instrumentés (`k=353, v="1"`, `k=363, v="30"`)
+- [x] 4.2 Écran Alarme cloud (code à 4 chiffres masqué, confirmation de l'arrêt, rappel de boucle ouverte) et message « cloud seulement » en LAN ; vérifier par des tests instrumentés en cloud et en LAN
+- [x] 4.3 Protection du code : pas de stockage ni d'état restauré, effacement après envoi et à `ON_STOP`, corps masqué dans les journaux, `validated_params` non affiché ; vérifier par `NR-android-16` (code absent des journaux et du stockage)
+- [x] 4.4 Masquer l'écran Alarme en release derrière un drapeau tant que la mise en service n'est pas validée par un humain sur le banc BP ; vérifier que la build release n'affiche pas la tuile Alarme
 
 ## 5. Accueil et navigation (#15)
 

@@ -47,7 +47,9 @@ fun HomeScreen(onOpen: (Destination) -> Unit, onOpenFeature: (Feature) -> Unit) 
         EssensysCard(title = "Commandes", description = "Pilotez votre installation") {
             ActionButton("Éclairage", { onOpen(Destination.LIGHTING) }, Modifier.fillMaxWidth().testTag("open-lighting"))
             ActionButton("Volets & stores", { onOpen(Destination.SHUTTERS) }, Modifier.fillMaxWidth().testTag("open-shutters"))
-            ActionButton("Scénarios", { onOpenFeature(Feature.SCENARIOS) }, Modifier.fillMaxWidth().testTag("open-SCENARIOS"))
+            Feature.entries.filter { it != Feature.ALARM || BuildConfig.ALARM_ENABLED }.forEach { f ->
+                ActionButton(f.title, { onOpenFeature(f) }, Modifier.fillMaxWidth().testTag("open-${f.name}"))
+            }
         }
         EssensysCard(title = "Bientôt disponible", description = "Prochaine version de l'application") {
             listOf("Chauffage", "Scénarios", "Chauffe-eau", "Arrosage", "Alarme").forEach {

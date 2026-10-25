@@ -122,3 +122,8 @@ import kotlinx.serialization.Serializable
 )
 
 @Serializable data class HistoryLatest(val lastAction: LastAction? = null)
+
+/** Alarme (cloud `POST /api/portal/web/actions`) : le code n'est jamais stocké ni journalisé par l'app. */
+@Serializable data class AlarmRequest(val alarme: String, val codealarme: String) {
+    override fun toString() = "AlarmRequest(alarme=$alarme, codealarme=••••)"
+}

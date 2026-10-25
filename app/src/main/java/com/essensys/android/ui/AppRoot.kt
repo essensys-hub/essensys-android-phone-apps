@@ -47,7 +47,11 @@ import com.essensys.android.data.session.LinkState
 import com.essensys.android.di.AppContainer
 import com.essensys.android.ui.components.StatusPill
 import com.essensys.android.ui.screens.ControlViewModel
+import com.essensys.android.ui.screens.AlarmScreen
+import com.essensys.android.ui.screens.ComfortViewModel
 import com.essensys.android.ui.screens.Destination
+import com.essensys.android.ui.screens.SprinklerScreen
+import com.essensys.android.ui.screens.WaterHeaterScreen
 import com.essensys.android.ui.screens.Feature
 import com.essensys.android.ui.screens.ScenariosScreen
 import com.essensys.android.ui.screens.ScenariosViewModel
@@ -72,6 +76,7 @@ fun EssensysRoot(container: AppContainer) {
     val controlVm: ControlViewModel = viewModel { ControlViewModel(container.control) }
     val heatingVm: HeatingViewModel = viewModel { HeatingViewModel(container.heating) }
     val scenariosVm: ScenariosViewModel = viewModel { ScenariosViewModel(container.scenarios) }
+    val comfortVm: ComfortViewModel = viewModel { ComfortViewModel(container.comfort) }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     val link by sessionVm.link.collectAsStateWithLifecycle()
 
@@ -86,7 +91,7 @@ fun EssensysRoot(container: AppContainer) {
                     LaunchedEffect(session.mode, session.isAuthenticated) { sessionVm.refreshLink() }
                     when (val l = link) {
                         null -> Column(insets) { ScreenColumn { Text("Chargement…", color = Essensys.colors.textMuted) } }
-                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm)
+                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm)
                         else -> Column(insets) { LinkScreen(sessionVm, l) }
                     }
                 }
@@ -101,6 +106,7 @@ private fun MainScaffold(
     controlVm: ControlViewModel,
     heatingVm: HeatingViewModel,
     scenariosVm: ScenariosViewModel,
+    comfortVm: ComfortViewModel,
 ) {
     var destination by rememberSaveable { mutableStateOf(Destination.HOME) }
     var feature by rememberSaveable { mutableStateOf<Feature?>(null) }
@@ -175,7 +181,9 @@ private fun MainScaffold(
             val current = feature
             if (current != null) when (current) {
                 Feature.SCENARIOS -> ScenariosScreen(scenariosVm, commandsEnabled)
-                Feature.WATER_HEATER, Feature.SPRINKLER, Feature.ALARM -> Unit
+                Feature.WATER_HEATER -> WaterHeaterScreen(comfortVm, commandsEnabled)
+                Feature.SPRINKLER -> SprinklerScreen(comfortVm, commandsEnabled)
+                Feature.ALARM -> AlarmScreen(comfortVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
             } else when (destination) {
                 Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it })
                 Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled)
