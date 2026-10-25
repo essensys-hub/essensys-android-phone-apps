@@ -46,7 +46,47 @@ import kotlinx.serialization.Serializable
     val message: String? = null,
 )
 
-@Serializable data class ExchangeResponse(val values: List<KeyValue> = emptyList(), val stale: Boolean = false)
+@Serializable data class ExchangeResponse(
+    val values: List<KeyValue> = emptyList(),
+    val stale: Boolean = false,
+    val source: String? = null,
+)
+
+@Serializable data class InjectBatchRequest(val params: List<KeyValue>)
+
+// Synchronisation du planning de chauffage, LAN seulement (essensys-server-backend handlers.go).
+@Serializable data class HeatingSyncRequest(val startIndex: Int, val byteCount: Int)
+
+@Serializable data class HeatingSyncStatus(
+    val active: Boolean = false,
+    val received: Int = 0,
+    val total: Int = 0,
+    val chunksTotal: Int = 0,
+    val chunksCompleted: Int = 0,
+)
+
+@Serializable data class HeatingSyncStarted(val status: String? = null, val sync: HeatingSyncStatus? = null)
+
+// Scénarios : cloud /api/portal/scenarios*, LAN /api/scenarios* (même format, handlers/scenarios.go).
+@Serializable data class ScenarioSlot(
+    @SerialName("slot_number") val slot: Int,
+    val label: String = "",
+    @SerialName("base_index") val baseIndex: Int = 0,
+    @SerialName("end_index") val endIndex: Int = 0,
+    val editable: Boolean = false,
+    @SerialName("last_launched") val lastLaunched: Int? = null,
+    val params: List<KeyValue> = emptyList(),
+)
+
+@Serializable data class ScenarioList(val slots: List<ScenarioSlot> = emptyList())
+
+@Serializable data class BitmaskBit(val bit: Int, val value: Int, val label: String)
+
+@Serializable data class BitmaskField(val index: Int, val name: String = "", val bits: List<BitmaskBit> = emptyList())
+
+@Serializable data class BitmaskMeta(val fields: List<BitmaskField> = emptyList())
+
+@Serializable data class ScenarioSaveRequest(val params: Map<String, String>)
 
 @Serializable data class LinkRequest(
     val id: Long? = null,
@@ -68,10 +108,16 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class GatewayInfo(val id: String? = null, val hostname: String? = null, val online: Boolean = false)
 
+@Serializable data class ArmoireInfo(
+    @SerialName("no_serie") val serial: String? = null,
+    @SerialName("last_seen") val lastSeen: String? = null,
+)
+
 @Serializable data class PortalSession(
     val user: CloudUser? = null,
     @SerialName("portal_access") val portalAccess: Boolean = false,
     val gateway: GatewayInfo? = null,
+    val armoire: ArmoireInfo? = null,
 )
 
 @Serializable data class LastAction(
@@ -82,3 +128,8 @@ import kotlinx.serialization.Serializable
 )
 
 @Serializable data class HistoryLatest(val lastAction: LastAction? = null)
+
+/** Alarme (cloud `POST /api/portal/web/actions`) : le code n'est jamais stocké ni journalisé par l'app. */
+@Serializable data class AlarmRequest(val alarme: String, val codealarme: String) {
+    override fun toString() = "AlarmRequest(alarme=$alarme, codealarme=••••)"
+}

@@ -94,4 +94,54 @@ class IndexTableTest {
     fun travel_time_indices_are_in_legacy_range() {
         IndexTable.shutters.forEach { assert(it.travelTimeIndex in 566..589) { it.id } }
     }
+
+    // NR: NR-android-10 essensys-hub/essensys-android-phone-apps#11
+    @Test
+    fun heating_zones_use_portal_indices_NR_android_10() {
+        val golden = mapOf("jour" to (13 to 349), "nuit" to (97 to 350), "sdb1" to (181 to 351), "sdb2" to (265 to 352))
+        assertEquals(golden.keys.toList(), IndexTable.heatingZones.map { it.id })
+        IndexTable.heatingZones.forEach { zone ->
+            val (start, mode) = golden.getValue(zone.id)
+            assertEquals(zone.id, start..start + 83, zone.scheduleIndices.first..zone.scheduleIndices.last)
+            assertEquals(zone.id, mode, zone.modeIndex)
+        }
+        // Les 4 plannings se suivent sans trou ni chevauchement (13–348), puis les modes 349–352.
+        assertEquals((13..348).toList(), IndexTable.heatingZones.flatMap { it.scheduleIndices })
+        val goldenModes = mapOf(
+            "AUTO" to 1, "ANTICIPATED" to 32, "FORCE_CONFORT" to 17, "FORCE_ECO" to 18,
+            "FORCE_ECO_PLUS" to 19, "FORCE_ECO_PLUS_PLUS" to 20, "FROST" to 21, "OFF" to 16,
+        )
+        assertEquals(goldenModes, IndexTable.ImmediateMode.entries.associate { it.name to it.value })
+        assertEquals(listOf(true, true, false, false), IndexTable.heatingZones.map { it.allowsAnticipated })
+    }
+
+    // NR: NR-android-11 essensys-hub/essensys-android-phone-apps#11
+    @Test
+    fun water_heater_and_sprinkler_use_firmware_indices_NR_android_11() {
+        assertEquals(
+            listOf(Injection(353, "0"), Injection(353, "1"), Injection(353, "2")),
+            IndexTable.WaterHeaterMode.entries.map { it.command() },
+        )
+        assertEquals(
+            listOf(Injection(363, "255"), Injection(363, "15"), Injection(363, "30"), Injection(363, "60"), Injection(363, "0")),
+            IndexTable.SprinklerMode.entries.map { it.command() },
+        )
+        // Les indices du portail (400–402, 500–504) sont absents du firmware : jamais envoyés.
+        val sent = IndexTable.WaterHeaterMode.entries.map { it.command().k } + IndexTable.SprinklerMode.entries.map { it.command().k }
+        assert(sent.none { it in 400..402 || it in 500..504 }) { sent }
+    }
+
+    @Test
+    fun scenario_blocks_follow_backend_layout() {
+        assertEquals(592..632, IndexTable.scenarioBlock(1).first..IndexTable.scenarioBlock(1).last)
+        assertEquals(715..755, IndexTable.scenarioBlock(4).first..IndexTable.scenarioBlock(4).last)
+        assertEquals(879..919, IndexTable.scenarioBlock(8).first..IndexTable.scenarioBlock(8).last)
+    }
+
+    @Test
+    fun anticipated_mode_is_refused_for_bathrooms() {
+        val sdb2 = IndexTable.heatingZones.first { it.id == "sdb2" }
+        assert(IndexTable.ImmediateMode.ANTICIPATED !in sdb2.immediateModes())
+        assert(runCatching { sdb2.command(IndexTable.ImmediateMode.ANTICIPATED) }.isFailure)
+    }
 }

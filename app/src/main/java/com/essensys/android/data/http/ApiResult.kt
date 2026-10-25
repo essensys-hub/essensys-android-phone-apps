@@ -39,6 +39,10 @@ sealed interface ApiError {
     data class Http(val status: Int, val code: String?, val text: String?) : ApiError {
         override val userMessage = text?.takeIf { it.isNotBlank() } ?: "Erreur serveur ($status)."
     }
+    /** Fonction absente de la gateway LAN (alarme) : aucun appel réseau n'est fait. */
+    data object CloudOnly : ApiError {
+        override val userMessage = "Disponible en mode cloud seulement."
+    }
     data class Network(val host: String, val cause: String?) : ApiError {
         /** Échec TLS en LAN : certificat non confirmé ou différent de celui épinglé (design D4). */
         val isCertificateProblem: Boolean

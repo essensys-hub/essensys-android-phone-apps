@@ -14,7 +14,7 @@ android {
         targetSdk = 36
         // Fournis par release.yml depuis le tag android-vX.Y.Z ; valeurs locales par défaut.
         versionCode = System.getenv("ESSENSYS_VERSION_CODE")?.toInt() ?: 2
-        versionName = System.getenv("ESSENSYS_VERSION_NAME") ?: "2.0.0-dev"
+        versionName = System.getenv("ESSENSYS_VERSION_NAME") ?: "2.1.0-dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -31,7 +31,13 @@ android {
     }
 
     buildTypes {
+        debug {
+            buildConfigField("boolean", "ALARM_ENABLED", "true")
+        }
         release {
+            // Alarme masquée en release tant qu'une mise en service n'est pas validée sur le banc BP
+            // (design mobile-portal-parity-2026-10-010, risque « encodage du code d'alarme »).
+            buildConfigField("boolean", "ALARM_ENABLED", "false")
             signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
@@ -56,6 +62,9 @@ android {
     testOptions {
         unitTests.isReturnDefaultValues = true
     }
+
+    // Fixtures JSON partagées entre tests unitaires et instrumentés (FakeBackend).
+    sourceSets.getByName("androidTest").resources.srcDir("src/test/resources")
 }
 
 dependencies {

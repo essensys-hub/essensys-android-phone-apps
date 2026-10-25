@@ -37,9 +37,11 @@ class NoArmoireInterceptor(
 
         private val ARMOIRE_MUTATIONS = listOf(
             Regex("/api/admin/inject"),
-            Regex("/api/portal/inject"),
+            Regex("/api/portal/inject"), // inject et inject/batch
             Regex("/api/(portal/)?web/actions"),
-            Regex("/scenarios/[^/]+/launch"),
+            Regex("/scenarios/[^/]+/(launch|restore)"),
+            Regex("/scenarios/\\d+/?$"), // PUT : enregistrement d'un scénario
+            Regex("/api/admin/heating/sync$"),
         )
         private val MUTATING = setOf("POST", "PUT", "PATCH", "DELETE")
 

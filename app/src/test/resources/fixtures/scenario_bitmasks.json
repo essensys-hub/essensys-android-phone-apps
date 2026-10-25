@@ -1,0 +1,71 @@
+{
+  "fields": [
+    {
+      "index": 605,
+      "name": "Eteindre_PDV_LSB",
+      "bits": [
+        {
+          "bit": 0,
+          "value": 1,
+          "label": "Entrée"
+        },
+        {
+          "bit": 1,
+          "value": 2,
+          "label": "Salon 1"
+        },
+        {
+          "bit": 2,
+          "value": 4,
+          "label": "Salon 2"
+        },
+        {
+          "bit": 3,
+          "value": 8,
+          "label": "Dressing 1"
+        },
+        {
+          "bit": 4,
+          "value": 16,
+          "label": "Dressing 2"
+        }
+      ]
+    },
+    {
+      "index": 617,
+      "name": "OuvrirVolets_PDV",
+      "bits": [
+        {
+          "bit": 0,
+          "value": 1,
+          "label": "Salon 1"
+        },
+        {
+          "bit": 1,
+          "value": 2,
+          "label": "Salon 2"
+        },
+        {
+          "bit": 2,
+          "value": 4,
+          "label": "Salon 3"
+        },
+        {
+          "bit": 3,
+          "value": 8,
+          "label": "SAM 1"
+        },
+        {
+          "bit": 4,
+          "value": 16,
+          "label": "SAM 2"
+        },
+        {
+          "bit": 5,
+          "value": 32,
+          "label": "Bureau"
+        }
+      ]
+    }
+  ]
+}

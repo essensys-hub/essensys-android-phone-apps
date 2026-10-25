@@ -1,0 +1,134 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "mobile-portal-parity-2026-10-010",
+  "title": "Compléter les apps Android et iPhone pour atteindre la parité avec le portail (v2.1.0)",
+  "status": "in-progress",
+  "owner": "rhinosys",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#35",
+    "project_item": "PVTI_lADODqt0Wc4BavHTzhDYdDo"
+  },
+  "git": {
+    "branch": "feat/mobile-portal-parity-2026-10-010",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "mobile-portal-parity-2026-10-010",
+    "path": "openspec/changes/mobile-portal-parity-2026-10-010",
+    "proposal": "openspec/changes/mobile-portal-parity-2026-10-010/proposal.md",
+    "design": "openspec/changes/mobile-portal-parity-2026-10-010/design.md",
+    "tasks": "openspec/changes/mobile-portal-parity-2026-10-010/tasks.md",
+    "specs": [
+      "openspec/changes/mobile-portal-parity-2026-10-010/specs/alarm-control/spec.md",
+      "openspec/changes/mobile-portal-parity-2026-10-010/specs/comfort-controls/spec.md",
+      "openspec/changes/mobile-portal-parity-2026-10-010/specs/heating-control/spec.md",
+      "openspec/changes/mobile-portal-parity-2026-10-010/specs/home-dashboard/spec.md",
+      "openspec/changes/mobile-portal-parity-2026-10-010/specs/parity-quality/spec.md",
+      "openspec/changes/mobile-portal-parity-2026-10-010/specs/scenarios/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/src/main/java/com/essensys/android/data/control/IndexTable.kt",
+      "app/src/main/java/com/essensys/android/data/control/ControlRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/ScheduleCodec.kt",
+      "app/src/main/java/com/essensys/android/data/control/HeatingRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/ScenarioRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/ComfortRepository.kt",
+      "app/src/main/java/com/essensys/android/data/http/ApiResult.kt",
+      "app/src/main/java/com/essensys/android/data/http/Dto.kt",
+      "app/src/main/java/com/essensys/android/data/http/NoArmoireInterceptor.kt",
+      "app/src/main/java/com/essensys/android/data/session/PortalRepository.kt",
+      "app/src/main/java/com/essensys/android/di/AppContainer.kt",
+      "app/src/main/java/com/essensys/android/ui/AppRoot.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/Destination.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/MainScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/SessionViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/HeatingScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/HeatingViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ScenariosScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ScenariosViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ComfortScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ComfortViewModel.kt",
+      "app/build.gradle.kts"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": [
+      "img/v2/02-home-light.png",
+      "img/v2/09-heating-light.png",
+      "img/v2/13-heating-dark.png",
+      "img/v2/11-scenarios-light.png",
+      "img/v2/12-water-heater-light.png"
+    ]
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "schedule byte encodes even and odd hour",
+      "heating zones use portal indices",
+      "batch is split into chunks of thirty",
+      "failed chunk stops sending and keeps pending bytes",
+      "immediate mode sends zone mode index",
+      "scenario bitmask index is shifted into slot block",
+      "scenario restore requires confirmation",
+      "water heater uses firmware index 353",
+      "sprinkler uses firmware index 363",
+      "alarm code is never logged or stored",
+      "alarm is cloud only",
+      "no armoire guard blocks new mutation routes",
+      "offline disables quick scenarios but tiles stay open"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ],
+    "junit": [
+      "app/src/test/java/com/essensys/android/data/control/IndexTableTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ControlRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ScheduleCodecTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/HeatingRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ScenarioRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ComfortRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/http/NoArmoireInterceptorTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/HeatingFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/ScenariosFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/ComfortFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/HomeFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/AppFlowTest.kt"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.1.0 : chauffage (planning et mode immédiat), scénarios, chauffe-eau, arrosage, alarme (cloud) et accueil à tuiles, parité avec le portail et l'iPhone.",
+    "target_tag": "android-v2.1.0",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}

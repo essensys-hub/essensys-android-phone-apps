@@ -56,6 +56,29 @@ class NoArmoireInterceptorTest {
     }
 
     @Test
+    fun no_armoire_guard_blocks_new_mutation_routes() {
+        val routes = listOf(
+            "POST" to "https://mon.essensys.fr/api/portal/inject/batch",
+            "POST" to "https://mon.essensys.fr/api/portal/web/actions",
+            "POST" to "https://mon.essensys.fr/api/portal/scenarios/2/launch",
+            "POST" to "https://mon.essensys.fr/api/portal/scenarios/3/restore",
+            "PUT" to "https://mon.essensys.fr/api/portal/scenarios/7",
+            "POST" to "https://mon.essensys.local/api/scenarios/2/launch",
+            "PUT" to "https://mon.essensys.local/api/scenarios/8",
+            "POST" to "https://mon.essensys.local/api/admin/heating/sync",
+        )
+        routes.forEach { (method, url) ->
+            val request = Request.Builder().url(url).method(method, "{}".toRequestBody(json)).build()
+            val error = runCatching { client.newCall(request).execute() }.exceptionOrNull()
+            assertTrue("$method $url", error is ArmoireMutationBlocked)
+        }
+        // Lectures et réglage admin non bloqués.
+        assertFalse(NoArmoireInterceptor.isArmoireMutation("GET", "/api/admin/heating/sync/status"))
+        assertFalse(NoArmoireInterceptor.isArmoireMutation("PUT", "/api/admin/scenarios/sync"))
+        assertFalse(NoArmoireInterceptor.isArmoireMutation("GET", "/api/portal/scenarios/4"))
+    }
+
+    @Test
     fun reads_and_non_armoire_paths_are_not_mutations() {
         assertFalse(NoArmoireInterceptor.isArmoireMutation("GET", "/api/portal/inject"))
         assertFalse(NoArmoireInterceptor.isArmoireMutation("POST", "/api/auth/login"))
