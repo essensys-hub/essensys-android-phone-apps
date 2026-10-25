@@ -39,7 +39,7 @@ class FakeBackend(
                         else """{"status":"none","portal_access":false}""",
                     )
                     path == "/api/portal/session" -> json(
-                        """{"portal_access":true,"gateway":{"id":"gw-demo","hostname":"demo","online":$gatewayOnline}}""",
+                        """{"user":{"id":1,"email":"demo@essensys.fr","first_name":"Camille","last_name":"Démo"},"portal_access":true,"gateway":{"id":"gw-demo","hostname":"demo","online":$gatewayOnline},"armoire":{"id":1,"no_serie":"SC944D-0001","last_seen":"2026-10-25T08:00:00Z"}}""",
                     )
                     path == "/api/user/me" -> json("""{"user":{"id":1,"email":"demo@essensys.fr","role":"admin"}}""")
                     path == "/api/portal/history/latest" -> json("""{"lastAction":null,"message":"No actions yet"}""")

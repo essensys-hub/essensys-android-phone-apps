@@ -185,7 +185,7 @@ private fun MainScaffold(
                 Feature.SPRINKLER -> SprinklerScreen(comfortVm, commandsEnabled)
                 Feature.ALARM -> AlarmScreen(comfortVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
             } else when (destination) {
-                Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it })
+                Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it }, scenariosVm, commandsEnabled)
                 Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled)
                 Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true)
                 Destination.HEATING -> HeatingScreen(heatingVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)

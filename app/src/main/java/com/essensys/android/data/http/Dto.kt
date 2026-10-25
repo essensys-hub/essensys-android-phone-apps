@@ -108,10 +108,16 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class GatewayInfo(val id: String? = null, val hostname: String? = null, val online: Boolean = false)
 
+@Serializable data class ArmoireInfo(
+    @SerialName("no_serie") val serial: String? = null,
+    @SerialName("last_seen") val lastSeen: String? = null,
+)
+
 @Serializable data class PortalSession(
     val user: CloudUser? = null,
     @SerialName("portal_access") val portalAccess: Boolean = false,
     val gateway: GatewayInfo? = null,
+    val armoire: ArmoireInfo? = null,
 )
 
 @Serializable data class LastAction(

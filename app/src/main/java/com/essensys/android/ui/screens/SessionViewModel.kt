@@ -7,6 +7,7 @@ import com.essensys.android.data.auth.LoginOutcome
 import com.essensys.android.data.http.ApiResult
 import com.essensys.android.data.http.LanTrust
 import com.essensys.android.data.http.LastAction
+import com.essensys.android.data.http.PortalSession
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.Hosts
 import com.essensys.android.data.session.LinkState
@@ -47,6 +48,9 @@ class SessionViewModel(
     val link: StateFlow<LinkState?> = _link.asStateFlow()
     private val _gatewayOnline = MutableStateFlow<Boolean?>(null)
     val gatewayOnline: StateFlow<Boolean?> = _gatewayOnline.asStateFlow()
+    private val _account = MutableStateFlow<PortalSession?>(null)
+    /** Compte et armoire (cloud), affichés dans les Réglages (spec home-dashboard « Compte et armoire »). */
+    val account: StateFlow<PortalSession?> = _account.asStateFlow()
     private val _lastAction = MutableStateFlow<LastAction?>(null)
     val lastAction: StateFlow<LastAction?> = _lastAction.asStateFlow()
     private val _info = MutableStateFlow<String?>(null)
@@ -162,7 +166,10 @@ class SessionViewModel(
         coroutineScope {
             launch {
                 while (true) {
-                    (portal.gatewayOnline() as? ApiResult.Ok)?.let { _gatewayOnline.value = it.value }
+                    (portal.session() as? ApiResult.Ok)?.let {
+                        _account.value = it.value
+                        _gatewayOnline.value = it.value.gateway?.online == true
+                    }
                     delay(sessionPeriodMs)
                 }
             }

@@ -1,6 +1,25 @@
 package com.essensys.android.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Grass
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.Thermostat
+import androidx.compose.material.icons.outlined.WaterDrop
+import androidx.compose.material.icons.outlined.Window
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import com.essensys.android.ui.components.FeedbackBanner
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,22 +59,67 @@ fun ScreenColumn(content: @Composable ColumnScope.() -> Unit) {
     }
 }
 
-/** Accueil V1 : raccourcis et fonctions à venir, sans données fictives (design « Bientôt disponible »). */
+/** Scénarios rapides de l'accueil (spec home-dashboard). */
+private val QUICK_SCENARIOS = listOf(2 to "Je sors", 4 to "Je rentre", 5 to "Je vais me coucher", 6 to "Je me lève")
+
+private data class Tile(val tag: String, val title: String, val description: String, val icon: ImageVector, val open: () -> Unit)
+
+/**
+ * Accueil : scénarios rapides et une tuile par fonction, comme le tableau de bord du portail
+ * (`DashboardPage.tsx`). L'état de l'armoire et la dernière action restent dans l'en-tête.
+ */
 @Composable
-fun HomeScreen(onOpen: (Destination) -> Unit, onOpenFeature: (Feature) -> Unit) {
+fun HomeScreen(
+    onOpen: (Destination) -> Unit,
+    onOpenFeature: (Feature) -> Unit,
+    scenariosVm: ScenariosViewModel,
+    commandsEnabled: Boolean,
+) {
+    val scenarios by scenariosVm.state.collectAsStateWithLifecycle()
+    val tiles = buildList {
+        add(Tile("open-lighting", "Éclairage", "Lumières principales et indirectes", Icons.Outlined.Lightbulb) { onOpen(Destination.LIGHTING) })
+        add(Tile("open-shutters", "Volets & stores", "Ouverture et fermeture", Icons.Outlined.Window) { onOpen(Destination.SHUTTERS) })
+        add(Tile("open-heating", "Chauffage", "Zones et planning", Icons.Outlined.Thermostat) { onOpen(Destination.HEATING) })
+        add(Tile("open-SCENARIOS", "Scénarios", "Je sors, vacances, personnalisés", Icons.Outlined.PlayCircle) { onOpenFeature(Feature.SCENARIOS) })
+        add(Tile("open-WATER_HEATER", "Chauffe-eau", "Marche, heures creuses, arrêt", Icons.Outlined.WaterDrop) { onOpenFeature(Feature.WATER_HEATER) })
+        add(Tile("open-SPRINKLER", "Arrosage", "Programmation jardin", Icons.Outlined.Grass) { onOpenFeature(Feature.SPRINKLER) })
+        if (BuildConfig.ALARM_ENABLED) add(Tile("open-ALARM", "Alarme", "Mise en service et arrêt", Icons.Outlined.Shield) { onOpenFeature(Feature.ALARM) })
+    }
     ScreenColumn {
-        EssensysCard(title = "Commandes", description = "Pilotez votre installation") {
-            ActionButton("Éclairage", { onOpen(Destination.LIGHTING) }, Modifier.fillMaxWidth().testTag("open-lighting"))
-            ActionButton("Volets & stores", { onOpen(Destination.SHUTTERS) }, Modifier.fillMaxWidth().testTag("open-shutters"))
-            Feature.entries.filter { it != Feature.ALARM || BuildConfig.ALARM_ENABLED }.forEach { f ->
-                ActionButton(f.title, { onOpenFeature(f) }, Modifier.fillMaxWidth().testTag("open-${f.name}"))
+        FeedbackBanner(scenarios.feedback)
+        EssensysCard(title = "Scénarios rapides", description = if (commandsEnabled) "Un appui lance le scénario" else "Armoire hors ligne : lancement impossible") {
+            QUICK_SCENARIOS.chunked(2).forEach { row ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    row.forEach { (slot, label) ->
+                        ActionButton(
+                            label, { scenariosVm.launch(slot, label) }, Modifier.weight(1f).testTag("quick-$slot"), Tone.PRIMARY,
+                            loading = "launch-$slot" in scenarios.inFlight, enabled = commandsEnabled, compact = true,
+                        )
+                    }
+                }
             }
         }
-        EssensysCard(title = "Bientôt disponible", description = "Prochaine version de l'application") {
-            listOf("Chauffage", "Scénarios", "Chauffe-eau", "Arrosage", "Alarme").forEach {
-                Text("• $it", color = Essensys.colors.textMuted)
+        tiles.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                row.forEach { tile -> HomeTile(tile, Modifier.weight(1f).fillMaxHeight()) }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
             }
-            Text("En attendant, ces fonctions restent accessibles depuis le portail web.", style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted)
+        }
+    }
+}
+
+@Composable
+private fun HomeTile(tile: Tile, modifier: Modifier) {
+    Surface(
+        modifier = modifier.clickable(onClick = tile.open).testTag(tile.tag),
+        shape = MaterialTheme.shapes.medium,
+        color = Essensys.colors.card,
+        border = BorderStroke(1.dp, Essensys.colors.border),
+    ) {
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Icon(tile.icon, contentDescription = null, tint = Essensys.colors.primary)
+            Text(tile.title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Essensys.colors.text)
+            Text(tile.description, style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted)
         }
     }
 }
@@ -89,9 +153,28 @@ fun SettingsScreen(vm: SessionViewModel) {
                 Switch(checked = session.testMode, onCheckedChange = vm::setTestMode, modifier = Modifier.testTag("test-mode"))
             }
         }
+        val account by vm.account.collectAsStateWithLifecycle()
         EssensysCard(title = "Compte") {
+            if (session.mode == ConnectionMode.CLOUD) {
+                account?.user?.let { user ->
+                    val name = listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { null }
+                    Text(listOfNotNull(name, user.email).joinToString(" — "), Modifier.testTag("account-user"), color = Essensys.colors.text)
+                }
+                account?.armoire?.let { armoire ->
+                    Text(
+                        "Armoire ${armoire.serial ?: "—"}" + (armoire.lastSeen?.let { " · dernier contact ${formatLastSeen(it)}" } ?: ""),
+                        Modifier.testTag("account-armoire"), style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted,
+                    )
+                }
+            }
             ActionButton("Se déconnecter", { vm.logout() }, Modifier.fillMaxWidth().testTag("logout"), Tone.DANGER)
             Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted)
         }
     }
 }
+
+/** « 2026-10-25T08:00:00Z » → « 25/10/2026 08:00 » (heure locale) ; brut si illisible. */
+internal fun formatLastSeen(raw: String): String = runCatching {
+    java.time.Instant.parse(raw).atZone(java.time.ZoneId.systemDefault())
+        .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+}.getOrDefault(raw)

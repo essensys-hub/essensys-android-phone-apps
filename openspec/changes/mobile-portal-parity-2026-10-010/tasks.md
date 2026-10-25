@@ -27,9 +27,9 @@
 
 ## 5. Accueil et navigation (#15)
 
-- [ ] 5.1 Navigation à 5 onglets (Accueil, Éclairage, Volets, Chauffage, Réglages) et écrans poussés depuis l'accueil ; vérifier par un test instrumenté de navigation
-- [ ] 5.2 Accueil : scénarios rapides, tuiles de toutes les fonctions, suppression de « Bientôt disponible », commandes désactivées hors ligne ; vérifier par des tests instrumentés (hors ligne : « Je sors » désactivé, planning lisible)
-- [ ] 5.3 Réglages : compte et armoire lus dans `/api/portal/session` en cloud ; vérifier par un test instrumenté
+- [x] 5.1 Navigation à 5 onglets (Accueil, Éclairage, Volets, Chauffage, Réglages) et écrans poussés depuis l'accueil ; vérifier par un test instrumenté de navigation
+- [x] 5.2 Accueil : scénarios rapides, tuiles de toutes les fonctions, suppression de « Bientôt disponible », commandes désactivées hors ligne ; vérifier par des tests instrumentés (hors ligne : « Je sors » désactivé, planning lisible)
+- [x] 5.3 Réglages : compte et armoire lus dans `/api/portal/session` en cloud ; vérifier par un test instrumenté
 
 ## 6. Qualité, CI et livraison (#16)
 

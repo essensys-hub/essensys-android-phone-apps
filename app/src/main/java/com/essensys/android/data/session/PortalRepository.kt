@@ -44,8 +44,13 @@ class PortalRepository(
         }
     }
 
-    suspend fun gatewayOnline(): ApiResult<Boolean> =
-        get("/api/portal/session", PortalSession.serializer()) { it.gateway?.online == true }
+    suspend fun gatewayOnline(): ApiResult<Boolean> = when (val r = session()) {
+        is ApiResult.Err -> r
+        is ApiResult.Ok -> ApiResult.Ok(r.value.gateway?.online == true)
+    }
+
+    /** Session cloud : compte, gateway (en ligne si vue depuis moins de 2 min) et armoire liée. */
+    suspend fun session(): ApiResult<PortalSession> = get("/api/portal/session", PortalSession.serializer()) { it }
 
     suspend fun lastAction(): ApiResult<LastAction?> =
         get("/api/portal/history/latest", HistoryLatest.serializer()) { it.lastAction }

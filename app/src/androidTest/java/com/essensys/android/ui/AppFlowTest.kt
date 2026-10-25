@@ -144,7 +144,8 @@ class AppFlowTest {
         compose.onNodeWithTag("nav-LIGHTING").performClick()
         screenshot("07-lighting-dark")
         compose.onNodeWithTag("nav-SETTINGS").performClick()
-        compose.onNodeWithTag("logout").assertIsDisplayed()
         screenshot("08-settings-dark")
+        // Les infos du compte (v2.1.0) poussent la déconnexion sous la ligne de flottaison.
+        compose.onNodeWithTag("logout").performScrollTo().assertIsDisplayed()
     }
 }
