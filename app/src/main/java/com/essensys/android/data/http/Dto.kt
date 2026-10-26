@@ -111,6 +111,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class ArmoireInfo(
     @SerialName("no_serie") val serial: String? = null,
     @SerialName("last_seen") val lastSeen: String? = null,
+    /** Dernier contact de l'armoire de 2 min au plus ; absent d'un ancien backend, donc faux. */
+    val online: Boolean = false,
 )
 
 @Serializable data class PortalSession(
@@ -118,7 +120,14 @@ import kotlinx.serialization.Serializable
     @SerialName("portal_access") val portalAccess: Boolean = false,
     val gateway: GatewayInfo? = null,
     val armoire: ArmoireInfo? = null,
-)
+) {
+    /**
+     * Armoire en ligne : la gateway OU l'armoire elle-même a été vue depuis 2 min au plus.
+     * Une installation sans gateway n'a pas de bloc `gateway` : seul `armoire.online` compte
+     * (armoire-online-sans-gateway-2026-10-012, essensys-feature-lifecycle#37).
+     */
+    fun armoireOnline(): Boolean = gateway?.online == true || armoire?.online == true
+}
 
 @Serializable data class LastAction(
     val guid: String? = null,

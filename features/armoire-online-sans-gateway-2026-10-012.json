@@ -57,7 +57,9 @@
       "@nr"
     ],
     "junit": [
+      "app/src/test/java/com/essensys/android/data/session/PortalOnlineTest.kt",
       "app/src/test/java/com/essensys/android/data/control/ComfortRepositoryTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/ArmoireOnlineFlowTest.kt",
       "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt"
     ]
   },

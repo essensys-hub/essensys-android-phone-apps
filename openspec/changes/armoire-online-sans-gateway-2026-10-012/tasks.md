@@ -1,7 +1,7 @@
 ## 1. Règle armoire en ligne (#24)
 
-- [ ] 1.1 Ajouter `online` à `ArmoireInfo` et la règle `armoireOnline()` ; l'utiliser dans `PortalRepository` et `SessionViewModel` ; vérifier par `NR-android-19` (test unitaire, cas A à F) et un test `PortalRepository` avec et sans gateway
-- [ ] 1.2 Faire servir à `FakeBackend` une session sans gateway et un `last_seen` récent ou ancien ; vérifier par des tests instrumentés (cas D et E : badge et boutons)
+- [x] 1.1 Ajouter `online` à `ArmoireInfo` et la règle `armoireOnline()` ; l'utiliser dans `PortalRepository` et `SessionViewModel` ; vérifier par `NR-android-19` (test unitaire, cas A à F) et un test `PortalRepository` avec et sans gateway
+- [x] 1.2 Faire servir à `FakeBackend` une session sans gateway et un `last_seen` récent ou ancien ; vérifier par des tests instrumentés (cas D et E : badge et boutons)
 
 ## 2. Qualité et livraison (#25)
 

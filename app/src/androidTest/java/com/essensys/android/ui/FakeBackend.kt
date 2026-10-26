@@ -19,6 +19,12 @@ class FakeBackend(
     var temporaryPassword: Boolean = false,
     var gatewayOnline: Boolean = true,
     var injectDelayMs: Long = 0,
+    /** Installation avec gateway ; sans, la session n'a pas de bloc `gateway` (essensys-feature-lifecycle#37). */
+    var hasGateway: Boolean = true,
+    /** Session sans bloc `armoire` (armoire jamais vue). */
+    var hasArmoire: Boolean = true,
+    /** `armoire.online` ; par défaut, l'armoire est vue si la gateway est en ligne. */
+    var armoireOnline: Boolean? = null,
 ) : AutoCloseable {
     val injections = CopyOnWriteArrayList<String>()
     val requests = CopyOnWriteArrayList<RecordedRequest>()
@@ -38,9 +44,7 @@ class FakeBackend(
                         if (linked) """{"status":"none","portal_access":true,"linked_gateway_id":"gw-demo"}"""
                         else """{"status":"none","portal_access":false}""",
                     )
-                    path == "/api/portal/session" -> json(
-                        """{"user":{"id":1,"email":"demo@essensys.fr","first_name":"Camille","last_name":"Démo"},"portal_access":true,"gateway":{"id":"gw-demo","hostname":"demo","online":$gatewayOnline},"armoire":{"id":1,"no_serie":"SC944D-0001","last_seen":"2026-10-25T08:00:00Z"}}""",
-                    )
+                    path == "/api/portal/session" -> json(sessionJson())
                     path == "/api/user/me" -> json("""{"user":{"id":1,"email":"demo@essensys.fr","role":"admin"}}""")
                     path == "/api/portal/history/latest" -> json("""{"lastAction":null,"message":"No actions yet"}""")
                     path == "/api/portal/inject" || path == "/api/portal/inject/batch" || path == "/api/admin/inject" -> {
@@ -94,6 +98,13 @@ class FakeBackend(
                 if (dryRun(request)) testOk() else json("""{"status":"ok","guid":"g","guids":["g"],"slot":${rest.substringBefore('/')}}""")
             }
         }
+    }
+
+    private fun sessionJson(): String {
+        val gateway = if (hasGateway) ""","gateway":{"id":"gw-demo","hostname":"demo","online":$gatewayOnline}""" else ""
+        val seen = armoireOnline ?: (hasGateway && gatewayOnline)
+        val armoire = if (hasArmoire) ""","armoire":{"id":1,"no_serie":"SC944D-0001","last_seen":"2026-10-25T08:00:00Z","online":$seen}""" else ""
+        return """{"user":{"id":1,"email":"demo@essensys.fr","first_name":"Camille","last_name":"Démo"},"portal_access":true$gateway$armoire}"""
     }
 
     private fun dryRun(request: RecordedRequest) = request.headers["X-Essensys-Test-Mode"] == "dry-run"
