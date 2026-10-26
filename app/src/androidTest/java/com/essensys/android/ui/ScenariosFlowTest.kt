@@ -85,4 +85,16 @@ class ScenariosFlowTest {
         assertTrue(body, body.contains("\"728\":\"2\""))
         assertFalse(body, body.contains("\"605\""))
     }
+
+    @Test
+    fun edit_scenario_security_outlets_choice_saves_offset_31() {
+        openScenarios()
+        compose.onNodeWithTag("edit-4").performScrollTo().performClick()
+        compose.waitUntil(5_000) { exists("scenario-security-CUT") }
+        compose.onNodeWithTag("scenario-security-CUT").performScrollTo().performClick()
+        compose.onNodeWithTag("editor-save").performScrollTo().performClick()
+        compose.waitUntil(5_000) { backend.mutations.isNotEmpty() }
+        val body = backend.mutationBodies.single()
+        assertTrue(body, body.contains("\"746\":\"1\"")) // scénario 4 : 715 + 31
+    }
 }

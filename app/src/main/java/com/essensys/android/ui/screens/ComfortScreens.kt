@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
@@ -27,6 +28,7 @@ import com.essensys.android.data.control.IndexTable
 import com.essensys.android.ui.components.ActionButton
 import com.essensys.android.ui.components.EssensysCard
 import com.essensys.android.ui.components.FeedbackBanner
+import com.essensys.android.ui.components.StatusPill
 import com.essensys.android.ui.components.Tone
 import com.essensys.android.ui.theme.Essensys
 
@@ -70,6 +72,60 @@ fun SprinklerScreen(vm: ComfortViewModel, commandsEnabled: Boolean) {
             }
             Text(
                 "Automatique : l'armoire suit le planning d'arrosage programmé.",
+                style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted,
+            )
+        }
+    }
+}
+
+/**
+ * Prises de sécurité (spec security-outlets) : état à l'indice 440, commande au 623 du scénario 1.
+ * « Couper » passe par une confirmation ; « Annuler » n'envoie rien.
+ */
+@Composable
+fun SecurityOutletsScreen(vm: ComfortViewModel, commandsEnabled: Boolean) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    var confirmCut by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { vm.loadSecurityOutlets() }
+
+    if (confirmCut) {
+        AlertDialog(
+            onDismissRequest = { confirmCut = false },
+            title = { Text("Couper les prises de sécurité") },
+            text = { Text("Les appareils branchés sur les prises de sécurité ne seront plus alimentés. Confirmez-vous la coupure ?") },
+            confirmButton = {
+                TextButton({ confirmCut = false; vm.securityOutlets(IndexTable.SecurityOutletsAction.CUT) }, Modifier.testTag("outlets-cut-confirm")) { Text("Couper") }
+            },
+            dismissButton = { TextButton({ confirmCut = false }, Modifier.testTag("outlets-cut-cancel")) { Text("Annuler") } },
+        )
+    }
+
+    ScreenColumn {
+        FeedbackBanner(state.feedback)
+        EssensysCard(title = "Prises de sécurité", description = "Coupez à distance les prises de sécurité (fer à repasser, plaques…), puis rétablissez-les") {
+            val (label, color) = when {
+                state.outletsWaiting -> "En attente de l'armoire" to Essensys.colors.warning
+                state.outlets == IndexTable.SecurityOutletsState.CUT -> state.outlets.label to Essensys.colors.danger
+                state.outlets == IndexTable.SecurityOutletsState.PILOTED -> state.outlets.label to Essensys.colors.success
+                else -> state.outlets.label to Essensys.colors.textMuted
+            }
+            StatusPill(label, color, Modifier.semantics(mergeDescendants = true) {}.testTag("outlets-state"))
+            if (!commandsEnabled) {
+                Text("Armoire hors ligne : commandes indisponibles.", Modifier.testTag("outlets-offline"), color = Essensys.colors.textMuted)
+            }
+            val sending = state.outletsSending
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                ActionButton(
+                    "Couper", { confirmCut = true }, Modifier.weight(1f).testTag("outlets-cut"), Tone.DANGER,
+                    loading = sending == IndexTable.SecurityOutletsAction.CUT, enabled = commandsEnabled && sending == null,
+                )
+                ActionButton(
+                    "Rétablir", { vm.securityOutlets(IndexTable.SecurityOutletsAction.RESTORE) }, Modifier.weight(1f).testTag("outlets-restore"), Tone.PRIMARY,
+                    loading = sending == IndexTable.SecurityOutletsAction.RESTORE, enabled = commandsEnabled && sending == null,
+                )
+            }
+            Text(
+                "Un scénario (par exemple « Je sors ») peut aussi couper ou rétablir les prises : réglez-le dans Scénarios.",
                 style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted,
             )
         }

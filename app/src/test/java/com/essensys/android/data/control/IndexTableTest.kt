@@ -150,6 +150,27 @@ class IndexTableTest {
         assertEquals(golden, IndexTable.shutters.associate { it.id to it.travelTimeCommand(30)!!.k })
     }
 
+    // NR: NR-android-18 essensys-hub/essensys-android-phone-apps#20
+    @Test
+    fun security_outlets_commands_and_scenario_offset_NR_android_18() {
+        // Même lot que les portails (securityOutlets.ts) : déclenchement du scénario 1 puis 623.
+        assertEquals(listOf(Injection(590, "1"), Injection(623, "1")), IndexTable.SecurityOutletsAction.CUT.commands())
+        assertEquals(listOf(Injection(590, "1"), Injection(623, "2")), IndexTable.SecurityOutletsAction.RESTORE.commands())
+        assertEquals(IndexTable.SECURITY_OUTLETS_COMMAND_INDEX, IndexTable.scenarioSecurityIndex(1))
+        assertEquals(664, IndexTable.scenarioSecurityIndex(2)) // « Je sors » : 633 + 31
+        assertEquals(746, IndexTable.scenarioSecurityIndex(4))
+        assertEquals(listOf(0, 1, 2), IndexTable.ScenarioSecurity.entries.map { it.value })
+        assertEquals(IndexTable.SecurityOutletsState.CUT, IndexTable.SecurityOutletsState.of("1"))
+        assertEquals(IndexTable.SecurityOutletsState.PILOTED, IndexTable.SecurityOutletsState.of(" 0 "))
+        assertEquals(IndexTable.SecurityOutletsState.UNKNOWN, IndexTable.SecurityOutletsState.of(null))
+        assertEquals(IndexTable.SecurityOutletsState.UNKNOWN, IndexTable.SecurityOutletsState.of("25"))
+        // L'éditeur écrit le choix au décalage 31 du bloc du scénario édité.
+        val jeSors = ScenarioDefinition(2, IndexTable.scenarioBlock(2).associateWith { 0 }).withSecurity(IndexTable.ScenarioSecurity.CUT)
+        assertEquals(1, jeSors.values[664])
+        assertEquals(IndexTable.ScenarioSecurity.CUT, jeSors.security)
+        assertEquals(IndexTable.ScenarioSecurity.NOTHING, ScenarioDefinition(2, emptyMap()).security)
+    }
+
     @Test
     fun scenario_blocks_follow_backend_layout() {
         assertEquals(592..632, IndexTable.scenarioBlock(1).first..IndexTable.scenarioBlock(1).last)

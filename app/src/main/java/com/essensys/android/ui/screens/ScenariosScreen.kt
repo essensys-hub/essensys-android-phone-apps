@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -52,18 +53,33 @@ fun ScenariosScreen(vm: ScenariosViewModel, commandsEnabled: Boolean) {
                             "L'enregistrer remettrait à zéro ses autres réglages : modification impossible pour l'instant.",
                         Modifier.testTag("scenario-incomplete"), color = Essensys.colors.textMuted,
                     )
-                    else -> editor.fields.forEach { field ->
-                        Text(field.title(), style = MaterialTheme.typography.titleSmall, color = Essensys.colors.text)
-                        field.bits.forEach { bit ->
-                            val checked = editor.definition?.isSet(field.index, bit.value) == true
+                    else -> {
+                        editor.fields.forEach { field ->
+                            Text(field.title(), style = MaterialTheme.typography.titleSmall, color = Essensys.colors.text)
+                            field.bits.forEach { bit ->
+                                val checked = editor.definition?.isSet(field.index, bit.value) == true
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Checkbox(
+                                        checked = checked,
+                                        onCheckedChange = { vm.toggle(field.index, bit.value, it) },
+                                        enabled = !editor.saving,
+                                        modifier = Modifier.testTag("bit-${field.index}-${bit.value}"),
+                                    )
+                                    Text(bit.label, color = Essensys.colors.text)
+                                }
+                            }
+                        }
+                        // Prises de sécurité : Scenario_Securite, décalage 31 du bloc (spec security-outlets).
+                        Text("Prises de sécurité", style = MaterialTheme.typography.titleSmall, color = Essensys.colors.text)
+                        IndexTable.ScenarioSecurity.entries.forEach { choice ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = { vm.toggle(field.index, bit.value, it) },
+                                RadioButton(
+                                    selected = editor.definition?.security == choice,
+                                    onClick = { vm.setSecurity(choice) },
                                     enabled = !editor.saving,
-                                    modifier = Modifier.testTag("bit-${field.index}-${bit.value}"),
+                                    modifier = Modifier.testTag("scenario-security-${choice.name}"),
                                 )
-                                Text(bit.label, color = Essensys.colors.text)
+                                Text(choice.label, color = Essensys.colors.text)
                             }
                         }
                     }

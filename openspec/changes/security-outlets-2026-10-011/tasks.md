@@ -1,7 +1,7 @@
 ## 1. Commande et état (#20)
 
-- [ ] 1.1 Ajouter à `IndexTable` les indices 623 et 440, la commande `[590 = 1, 623 = 1|2]` et le décalage 31 des scénarios ; vérifier par `NR-android-18` (couples exacts, 664 pour le scénario 2)
-- [ ] 1.2 Ajouter au `ComfortRepository` la commande des prises (lot `injectBatch`) et la lecture de 440 ; vérifier par des tests MockWebServer en cloud et en LAN (dry-run compris)
+- [x] 1.1 Ajouter à `IndexTable` les indices 623 et 440, la commande `[590 = 1, 623 = 1|2]` et le décalage 31 des scénarios ; vérifier par `NR-android-18` (couples exacts, 664 pour le scénario 2)
+- [x] 1.2 Ajouter au `ComfortRepository` la commande des prises (lot `injectBatch`) et la lecture de 440 ; vérifier par des tests MockWebServer en cloud et en LAN (dry-run compris)
 
 ## 2. Écran Prises de sécurité (#21)
 

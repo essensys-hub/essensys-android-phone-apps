@@ -41,6 +41,41 @@ class ComfortRepositoryTest {
     }
 
     @Test
+    fun security_outlets_cut_is_one_batch_in_cloud() = runBlocking {
+        TestServer(token = "jwt").use { t ->
+            t.enqueue(200, t.fixture("inject_ok.json"))
+            assertEquals(ApiResult.Ok(InjectOutcome.SENT), t.container.comfort.securityOutlets(IndexTable.SecurityOutletsAction.CUT))
+            val request = t.server.takeRequest()
+            assertEquals("/api/portal/inject/batch", request.url.encodedPath)
+            assertEquals("""{"params":[{"k":590,"v":"1"},{"k":623,"v":"1"}]}""", request.body!!.utf8())
+        }
+    }
+
+    @Test
+    fun security_outlets_restore_is_one_array_in_lan_with_dry_run() = runBlocking {
+        TestServer(mode = ConnectionMode.LAN, testMode = true).use { t ->
+            t.store.update { it.copy(lanCookie = "abc") }
+            t.enqueue(200, t.fixture("inject_dry_run.json"))
+            assertEquals(ApiResult.Ok(InjectOutcome.DRY_RUN_OK), t.container.comfort.securityOutlets(IndexTable.SecurityOutletsAction.RESTORE))
+            val request = t.server.takeRequest()
+            assertEquals("/api/admin/inject", request.url.encodedPath)
+            assertEquals("dry-run", request.headers["X-Essensys-Test-Mode"])
+            assertEquals("""[{"k":590,"v":"1"},{"k":623,"v":"2"}]""", request.body!!.utf8())
+        }
+    }
+
+    @Test
+    fun security_outlets_state_is_read_at_440() = runBlocking {
+        TestServer(token = "jwt").use { t ->
+            t.enqueue(200, """{"values":[{"k":440,"v":"1"}],"stale":false,"source":"gateway_cache"}""")
+            t.enqueue(200, """{"values":[],"stale":false,"source":"none"}""")
+            assertEquals(ApiResult.Ok(IndexTable.SecurityOutletsState.CUT), t.container.comfort.readSecurityOutlets())
+            assertTrue(t.server.takeRequest().url.toString().endsWith("/api/portal/exchange?keys=440"))
+            assertEquals(ApiResult.Ok(IndexTable.SecurityOutletsState.UNKNOWN), t.container.comfort.readSecurityOutlets())
+        }
+    }
+
+    @Test
     fun alarm_posts_web_actions_in_cloud() = runBlocking {
         TestServer(token = "jwt").use { t ->
             t.enqueue(200, t.fixture("web_actions_ok.json"))

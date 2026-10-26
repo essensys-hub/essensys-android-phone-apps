@@ -61,7 +61,7 @@
     "junit": [
       "app/src/test/java/com/essensys/android/data/control/IndexTableTest.kt",
       "app/src/test/java/com/essensys/android/data/control/ComfortRepositoryTest.kt",
-      "app/src/androidTest/java/com/essensys/android/ui/ComfortFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/SecurityOutletsFlowTest.kt",
       "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt"
     ]
   },
