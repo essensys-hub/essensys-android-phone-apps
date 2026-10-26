@@ -24,6 +24,12 @@ data class ScenarioDefinition(val slot: Int, val values: Map<Int, Int>) {
     fun isSet(metaIndex: Int, bitValue: Int): Boolean =
         (values[IndexTable.shiftIntoScenario(metaIndex, slot)] ?: 0) and bitValue != 0
 
+    /** Choix « Prises de sécurité » du scénario (décalage 31 du bloc, spec security-outlets). */
+    val security: IndexTable.ScenarioSecurity get() = IndexTable.ScenarioSecurity.of(values[IndexTable.scenarioSecurityIndex(slot)])
+
+    fun withSecurity(choice: IndexTable.ScenarioSecurity): ScenarioDefinition =
+        copy(values = values + (IndexTable.scenarioSecurityIndex(slot) to choice.value))
+
     fun toggled(metaIndex: Int, bitValue: Int, on: Boolean): ScenarioDefinition {
         val index = IndexTable.shiftIntoScenario(metaIndex, slot)
         val current = values[index] ?: 0

@@ -200,6 +200,46 @@ object IndexTable {
         return block.first + offset
     }
 
+    // --- Prises de sécurité (spec security-outlets) : indices du firmware `TableEchange.h` ---
+    // Commande : Scenario_Securite du scénario 1 (592 + 31), déclenché par 590 = 1. Verrouillé par NR-android-18.
+
+    const val SECURITY_OUTLETS_COMMAND_INDEX = 623 // Scenario_Securite, scénario 1
+    const val SECURITY_OUTLETS_STATE_INDEX = 440 // Securite_PriseCoupe : 1 = coupées, 0 = pilotées
+    const val SCENARIO_SECURITY_OFFSET = 31
+
+    enum class SecurityOutletsAction(val value: Int, val label: String) {
+        CUT(1, "Coupure des prises de sécurité"),
+        RESTORE(2, "Rétablissement des prises de sécurité");
+
+        /** Un seul lot : déclenchement du scénario 1 et commande. */
+        fun commands() = listOf(Injection(590, "1"), Injection(SECURITY_OUTLETS_COMMAND_INDEX, value.toString()))
+
+        val expectedState: SecurityOutletsState get() = if (this == CUT) SecurityOutletsState.CUT else SecurityOutletsState.PILOTED
+    }
+
+    enum class SecurityOutletsState(val label: String) {
+        CUT("Prises coupées"), PILOTED("Prises pilotées"), UNKNOWN("État inconnu");
+
+        companion object {
+            fun of(raw: String?) = when (raw?.trim()) {
+                "1" -> CUT
+                "0" -> PILOTED
+                else -> UNKNOWN
+            }
+        }
+    }
+
+    /** Choix « Prises de sécurité » d'un scénario (valeur de Scenario_Securite). */
+    enum class ScenarioSecurity(val value: Int, val label: String) {
+        NOTHING(0, "Ne rien faire"), CUT(1, "Couper"), RESTORE(2, "Rétablir");
+
+        companion object {
+            fun of(value: Int?) = entries.firstOrNull { it.value == value } ?: NOTHING
+        }
+    }
+
+    fun scenarioSecurityIndex(slot: Int): Int = scenarioBlock(slot).first + SCENARIO_SECURITY_OFFSET
+
     /** Limite firmware : 30 paramètres au plus par action (`heating/injectLimits.ts`). */
     const val MAX_PARAMS_PER_ACTION = 30
 

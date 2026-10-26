@@ -2,6 +2,7 @@ package com.essensys.android.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.essensys.android.data.control.IndexTable
 import com.essensys.android.data.control.InjectOutcome
 import com.essensys.android.data.control.ScenarioDefinition
 import com.essensys.android.data.control.ScenarioRepository
@@ -94,6 +95,12 @@ class ScenariosViewModel(private val scenarios: ScenarioRepository) : ViewModel(
         val editor = s.editor ?: return@update s
         val def = editor.definition ?: return@update s
         s.copy(editor = editor.copy(definition = def.toggled(metaIndex, bitValue, on)))
+    }
+
+    fun setSecurity(choice: IndexTable.ScenarioSecurity) = _state.update { s ->
+        val editor = s.editor ?: return@update s
+        val def = editor.definition ?: return@update s
+        s.copy(editor = editor.copy(definition = def.withSecurity(choice)))
     }
 
     fun closeEditor() = _state.update { it.copy(editor = null) }

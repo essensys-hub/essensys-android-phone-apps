@@ -50,6 +50,7 @@ import com.essensys.android.ui.screens.ControlViewModel
 import com.essensys.android.ui.screens.AlarmScreen
 import com.essensys.android.ui.screens.ComfortViewModel
 import com.essensys.android.ui.screens.Destination
+import com.essensys.android.ui.screens.SecurityOutletsScreen
 import com.essensys.android.ui.screens.SprinklerScreen
 import com.essensys.android.ui.screens.WaterHeaterScreen
 import com.essensys.android.ui.screens.Feature
@@ -183,6 +184,7 @@ private fun MainScaffold(
                 Feature.SCENARIOS -> ScenariosScreen(scenariosVm, commandsEnabled)
                 Feature.WATER_HEATER -> WaterHeaterScreen(comfortVm, commandsEnabled)
                 Feature.SPRINKLER -> SprinklerScreen(comfortVm, commandsEnabled)
+                Feature.SECURITY_OUTLETS -> SecurityOutletsScreen(comfortVm, commandsEnabled)
                 Feature.ALARM -> AlarmScreen(comfortVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
             } else when (destination) {
                 Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it }, scenariosVm, commandsEnabled)

@@ -14,5 +14,6 @@ enum class Feature(val title: String) {
     SCENARIOS("Scénarios"),
     WATER_HEATER("Chauffe-eau"),
     SPRINKLER("Arrosage"),
+    SECURITY_OUTLETS("Prises de sécurité"),
     ALARM("Alarme"),
 }

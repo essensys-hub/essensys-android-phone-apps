@@ -1,0 +1,95 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "security-outlets-2026-10-011",
+  "title": "Piloter les prises de sécurité depuis les apps et le portail (cloud et local)",
+  "status": "proposed",
+  "owner": "rhinosys",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#36",
+    "project_item": "PVTI_lADODqt0Wc4BavHTzhDc1KI"
+  },
+  "git": {
+    "branch": "feat/security-outlets-2026-10-011",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "security-outlets-2026-10-011",
+    "path": "openspec/changes/security-outlets-2026-10-011",
+    "proposal": "openspec/changes/security-outlets-2026-10-011/proposal.md",
+    "design": "openspec/changes/security-outlets-2026-10-011/design.md",
+    "tasks": "openspec/changes/security-outlets-2026-10-011/tasks.md",
+    "specs": [
+      "openspec/changes/security-outlets-2026-10-011/specs/security-outlets-quality/spec.md",
+      "openspec/changes/security-outlets-2026-10-011/specs/security-outlets/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/src/main/java/com/essensys/android/data/control/IndexTable.kt",
+      "app/src/main/java/com/essensys/android/data/control/ComfortRepository.kt",
+      "app/src/main/java/com/essensys/android/data/control/ScenarioRepository.kt",
+      "app/src/main/java/com/essensys/android/ui/AppRoot.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/MainScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ComfortScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ScenariosScreen.kt"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": [
+      "img/v2/02-home-light.png",
+      "img/v2/09-heating-light.png"
+    ]
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "couper envoie 590 et 623 a 1",
+      "retablir envoie 623 a 2",
+      "annuler la confirmation n envoie rien",
+      "commandes desactivees hors ligne",
+      "etat inconnu sans indice 440"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ],
+    "junit": [
+      "app/src/test/java/com/essensys/android/data/control/IndexTableTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ComfortRepositoryTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/SecurityOutletsFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.2.0 : couper et rétablir les prises de sécurité, état des prises, choix dans les scénarios (#36).",
+    "target_tag": "android-v2.2.0",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}

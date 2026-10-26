@@ -23,7 +23,7 @@ data class ComfortModes(val waterHeater: IndexTable.WaterHeaterMode?, val sprink
     }
 }
 
-/** Chauffe-eau, arrosage (specs comfort-controls) et alarme (spec alarm-control). */
+/** Chauffe-eau, arrosage (specs comfort-controls), prises de sécurité (spec security-outlets) et alarme (spec alarm-control). */
 class ComfortRepository(
     private val api: ApiCaller,
     private val store: SessionStore,
@@ -47,6 +47,16 @@ class ComfortRepository(
     suspend fun setWaterHeater(mode: IndexTable.WaterHeaterMode) = control.inject(mode.command())
 
     suspend fun setSprinkler(mode: IndexTable.SprinklerMode) = control.inject(mode.command())
+
+    /** Prises de sécurité (spec security-outlets) : état lu à l'indice 440, inconnu s'il est absent. */
+    suspend fun readSecurityOutlets(): ApiResult<IndexTable.SecurityOutletsState> =
+        when (val result = control.readExchange(listOf(IndexTable.SECURITY_OUTLETS_STATE_INDEX))) {
+            is ApiResult.Err -> result
+            is ApiResult.Ok -> ApiResult.Ok(IndexTable.SecurityOutletsState.of(result.value[IndexTable.SECURITY_OUTLETS_STATE_INDEX]))
+        }
+
+    /** Coupure ou rétablissement : un lot `[590 = 1, 623 = 1|2]`, en cloud comme en LAN. */
+    suspend fun securityOutlets(action: IndexTable.SecurityOutletsAction) = control.injectBatch(action.commands())
 
     /**
      * Mise en service ou arrêt de l'alarme, en cloud seulement. Le code n'est ni conservé ni renvoyé :

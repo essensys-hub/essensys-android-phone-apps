@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Grass
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.PlayCircle
+import androidx.compose.material.icons.outlined.Power
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Thermostat
 import androidx.compose.material.icons.outlined.WaterDrop
@@ -83,6 +84,7 @@ fun HomeScreen(
         add(Tile("open-SCENARIOS", "Scénarios", "Je sors, vacances, personnalisés", Icons.Outlined.PlayCircle) { onOpenFeature(Feature.SCENARIOS) })
         add(Tile("open-WATER_HEATER", "Chauffe-eau", "Marche, heures creuses, arrêt", Icons.Outlined.WaterDrop) { onOpenFeature(Feature.WATER_HEATER) })
         add(Tile("open-SPRINKLER", "Arrosage", "Programmation jardin", Icons.Outlined.Grass) { onOpenFeature(Feature.SPRINKLER) })
+        add(Tile("open-SECURITY_OUTLETS", "Prises de sécurité", "Couper et rétablir", Icons.Outlined.Power) { onOpenFeature(Feature.SECURITY_OUTLETS) })
         if (BuildConfig.ALARM_ENABLED) add(Tile("open-ALARM", "Alarme", "Mise en service et arrêt", Icons.Outlined.Shield) { onOpenFeature(Feature.ALARM) })
     }
     ScreenColumn {
