@@ -1,0 +1,93 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "armoire-online-sans-gateway-2026-10-012",
+  "title": "Armoire en ligne avec ou sans gateway (apps et portail cloud)",
+  "status": "proposed",
+  "owner": "rhinosys",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#37",
+    "project_item": "PVTI_lADODqt0Wc4BavHTzhDkSIQ"
+  },
+  "git": {
+    "branch": "fix/armoire-online-sans-gateway-2026-10-012",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "armoire-online-sans-gateway-2026-10-012",
+    "path": "openspec/changes/armoire-online-sans-gateway-2026-10-012",
+    "proposal": "openspec/changes/armoire-online-sans-gateway-2026-10-012/proposal.md",
+    "design": "openspec/changes/armoire-online-sans-gateway-2026-10-012/design.md",
+    "tasks": "openspec/changes/armoire-online-sans-gateway-2026-10-012/tasks.md",
+    "specs": [
+      "openspec/changes/armoire-online-sans-gateway-2026-10-012/specs/armoire-online/spec.md",
+      "openspec/changes/armoire-online-sans-gateway-2026-10-012/specs/armoire-online-quality/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/src/main/java/com/essensys/android/data/http/Dto.kt",
+      "app/src/main/java/com/essensys/android/data/session/PortalRepository.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/SessionViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/AppRoot.kt"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": [
+      "img/v2/02-home-light.png",
+      "img/v2/09-heating-light.png"
+    ]
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "sans gateway armoire vue en ligne",
+      "sans gateway armoire ancienne hors ligne",
+      "gateway hors ligne armoire vue",
+      "avec gateway en ligne",
+      "sans gateway ni armoire hors ligne",
+      "mode LAN commandes actives"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ],
+    "junit": [
+      "app/src/test/java/com/essensys/android/data/session/PortalOnlineTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/ComfortRepositoryTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/ArmoireOnlineFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.2.1 : armoire reconnue en ligne sans gateway, commandes actives (#37).",
+    "target_tag": "android-v2.2.1",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}

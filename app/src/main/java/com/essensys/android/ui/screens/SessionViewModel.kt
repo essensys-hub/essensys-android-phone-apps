@@ -168,7 +168,7 @@ class SessionViewModel(
                 while (true) {
                     (portal.session() as? ApiResult.Ok)?.let {
                         _account.value = it.value
-                        _gatewayOnline.value = it.value.gateway?.online == true
+                        _gatewayOnline.value = it.value.armoireOnline()
                     }
                     delay(sessionPeriodMs)
                 }
