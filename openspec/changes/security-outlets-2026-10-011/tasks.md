@@ -5,8 +5,8 @@
 
 ## 2. Écran Prises de sécurité (#21)
 
-- [ ] 2.1 Écran poussé depuis une tuile d'accueil : état, « Couper » avec confirmation, « Rétablir », relecture de l'état, désactivé hors ligne ; vérifier par des tests instrumentés (annuler n'envoie rien, hors ligne désactivé, état inconnu)
-- [ ] 2.2 Choix « Prises de sécurité » dans l'éditeur de scénarios ; vérifier par un test instrumenté (indice 664 enregistré à 1 pour « Je sors »)
+- [x] 2.1 Écran poussé depuis une tuile d'accueil : état, « Couper » avec confirmation, « Rétablir », relecture de l'état, désactivé hors ligne ; vérifier par des tests instrumentés (annuler n'envoie rien, hors ligne désactivé, état inconnu)
+- [x] 2.2 Choix « Prises de sécurité » dans l'éditeur de scénarios ; vérifier par un test instrumenté (indice 664 enregistré à 1 pour « Je sors »)
 
 ## 3. Qualité et livraison (#22)
 
