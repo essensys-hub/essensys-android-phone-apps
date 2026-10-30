@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.essensys.android.BuildConfig
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.LinkState
 import com.essensys.android.di.AppContainer
@@ -162,6 +163,12 @@ private fun MainScaffold(
                 if (info != null) {
                     Text(info, Modifier.padding(horizontal = 16.dp, vertical = 4.dp).testTag("session-info"), style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted)
                 }
+                // Visible sur toutes les captures envoyées au support (#27).
+                Text(
+                    "Version ${BuildConfig.VERSION_NAME}",
+                    Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 4.dp).testTag("app-version"),
+                    style = MaterialTheme.typography.labelSmall, color = Essensys.colors.textMuted,
+                )
             }
         },
         bottomBar = {
