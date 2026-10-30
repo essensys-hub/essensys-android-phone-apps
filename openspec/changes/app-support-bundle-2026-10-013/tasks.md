@@ -12,3 +12,7 @@
 
 - [ ] 3.1 CI verte, `/checkup` vert, captures de l'écran Support sur #38, README et version 2.3.0
 - [ ] 3.2 Vérification réelle par un humain (Wi-Fi puis 4G, Gmail et Outlook) avec réception du zip à l'adresse support, puis release `android-v2.3.0`
+
+## 4. Dernier contact de l'armoire (#33)
+
+- [x] 4.1 Afficher le dernier contact en heure locale avec la durée écoulée, et passer « Armoire associée » en « Attention » quand la date est inconnue ou a plus de 24 h sans gateway en ligne ; vérifier par des tests unitaires de la règle (horloge et fuseau fixes) et par `NR-android-21` (armoire vue il y a 9 mois derrière une gateway en ligne, puis sans gateway)

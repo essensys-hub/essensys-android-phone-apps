@@ -64,7 +64,9 @@
       "bundle contains no secret",
       "email intent targets support zip",
       "support is reachable before login",
-      "requests are logged without headers body"
+      "requests are logged without headers body",
+      "armoire last seen rule follows gateway and age",
+      "stale armoire last seen"
     ],
     "smoke_tags": [
       "@nr"
