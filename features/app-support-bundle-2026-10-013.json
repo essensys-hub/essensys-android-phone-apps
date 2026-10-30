@@ -1,0 +1,94 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "app-support-bundle-2026-10-013",
+  "title": "Bouton Support des apps : diagnostics, bundle zip et envoi par email",
+  "status": "proposed",
+  "owner": "rhinosys",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#38",
+    "project_item": "PVTI_lADODqt0Wc4BavHTzhEu7gI"
+  },
+  "git": {
+    "branch": "feat/app-support-bundle-2026-10-013",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "app-support-bundle-2026-10-013",
+    "path": "openspec/changes/app-support-bundle-2026-10-013",
+    "proposal": "openspec/changes/app-support-bundle-2026-10-013/proposal.md",
+    "design": "openspec/changes/app-support-bundle-2026-10-013/design.md",
+    "tasks": "openspec/changes/app-support-bundle-2026-10-013/tasks.md",
+    "specs": [
+      "openspec/changes/app-support-bundle-2026-10-013/specs/support-bundle/spec.md",
+      "openspec/changes/app-support-bundle-2026-10-013/specs/support-bundle-quality/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/src/main/java/com/essensys/android/data/http/HttpClientFactory.kt",
+      "app/src/main/java/com/essensys/android/di/AppContainer.kt",
+      "app/src/main/java/com/essensys/android/ui/AppRoot.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/MainScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/AuthScreens.kt",
+      "app/src/main/AndroidManifest.xml",
+      "app/build.gradle.kts"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": [
+      "img/v2/02-home-light.png",
+      "img/v2/09-heating-light.png"
+    ]
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "diagnostic sans aucun appel inject",
+      "portail injoignable tests appareil renseignes",
+      "session expiree signalee",
+      "mode test actif en attention",
+      "zip contient resume diagnostics journal",
+      "aucun secret dans le zip",
+      "email destinataire objet piece jointe"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ],
+    "junit": [
+      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.3.0 : bouton Support, diagnostic et envoi du bundle par email (#38).",
+    "target_tag": "android-v2.3.0",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}
