@@ -3,7 +3,10 @@ package com.essensys.android.ui
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.InMemorySessionStore
 import com.essensys.android.data.session.SessionState
+import androidx.test.platform.app.InstrumentationRegistry
+import com.essensys.android.data.support.SupportPackage
 import com.essensys.android.di.AppContainer
+import java.io.File
 import mockwebserver3.Dispatcher
 import mockwebserver3.MockResponse
 import mockwebserver3.MockWebServer
@@ -70,6 +73,8 @@ class FakeBackend(
                         if (dryRun(request)) testOk() else json("""{"status":"ok","message":"Action sent to queue"}""")
                     }
                     SCENARIOS.matches(path) -> scenarios(request, path)
+                    // Bouton Support : santé du portail (cloud) et de la gateway (LAN).
+                    path == "/api/portal/health" || path == "/health" -> json("""{"status":"ok"}""")
                     else -> MockResponse.Builder().code(404).body("Not found").build()
                 }
             }
@@ -120,10 +125,18 @@ class FakeBackend(
 
     private fun json(body: String) = MockResponse.Builder().code(200).addHeader("Content-Type", "application/json").body(body).build()
 
+    /** Messages « envoyés » au support : l'appli email n'est jamais ouverte en test. */
+    val supportMails = CopyOnWriteArrayList<SupportPackage>()
+
     fun container(state: SessionState = SessionState()): AppContainer {
         val base = server.url("/").toString().trimEnd('/')
         val store = InMemorySessionStore(state.copy(cloudHost = base, lanHost = if (state.mode == ConnectionMode.LAN) base else state.lanHost))
-        return AppContainer(store, guardNoArmoire = true, configureLan = {})
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        return AppContainer(
+            store, guardNoArmoire = true, configureLan = {},
+            supportDir = File(context.cacheDir, "support"),
+            mailer = { _, pkg -> supportMails += pkg },
+        )
     }
 
     override fun close() = server.close()

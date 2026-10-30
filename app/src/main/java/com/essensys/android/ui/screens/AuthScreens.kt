@@ -35,7 +35,7 @@ import com.essensys.android.ui.theme.Essensys
 
 /** Connexion : choix Cloud / Réseau local, hôte LAN, identifiants (specs mobile-auth, connection-modes). */
 @Composable
-fun LoginScreen(vm: SessionViewModel) {
+fun LoginScreen(vm: SessionViewModel, onSupport: () -> Unit = {}) {
     val session by vm.session.collectAsStateWithLifecycle()
     val busy by vm.busy.collectAsStateWithLifecycle()
     val error by vm.error.collectAsStateWithLifecycle()
@@ -100,6 +100,8 @@ fun LoginScreen(vm: SessionViewModel) {
                 TextButton(onClick = vm::forgetLanCertificate) { Text("Oublier le certificat de la gateway") }
             }
         }
+        // Accessible sans session : l'utilisateur qui n'arrive pas à se connecter en a le plus besoin.
+        TextButton(onClick = onSupport, modifier = Modifier.testTag("open-support")) { Text("Un problème de connexion ? Contacter le support") }
     }
 
     pending?.let { cert ->

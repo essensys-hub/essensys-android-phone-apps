@@ -16,4 +16,6 @@ enum class Feature(val title: String) {
     SPRINKLER("Arrosage"),
     SECURITY_OUTLETS("Prises de sécurité"),
     ALARM("Alarme"),
+    /** Ouvert depuis les Réglages (app-support-bundle-2026-10-013). */
+    SUPPORT("Support"),
 }

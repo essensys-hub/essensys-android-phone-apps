@@ -2,6 +2,8 @@ package com.essensys.android.data.http
 
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.SessionStore
+import com.essensys.android.data.support.AppLog
+import com.essensys.android.data.support.LoggingInterceptor
 import kotlinx.serialization.json.Json
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -38,14 +40,17 @@ object HttpClientFactory {
     /**
      * @param guardNoArmoire installe la garde no-armoire (tests, et builds debug si souhaité).
      * @param configure point d'extension (TLS épinglé en LAN, design D4).
+     * @param log journal du support ; placé avant l'authentification pour n'en voir aucun en-tête.
      */
     fun create(
         store: SessionStore,
         guardNoArmoire: Boolean,
         configure: OkHttpClient.Builder.() -> Unit = {},
+        log: AppLog? = null,
     ): OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
+        .apply { if (log != null) addInterceptor(LoggingInterceptor(log)) }
         .addInterceptor(SessionInterceptor(store))
         .apply { if (guardNoArmoire) addInterceptor(NoArmoireInterceptor()) }
         .apply(configure)

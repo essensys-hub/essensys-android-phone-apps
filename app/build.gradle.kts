@@ -17,6 +17,8 @@ android {
         versionName = System.getenv("ESSENSYS_VERSION_NAME") ?: "2.1.0-dev"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Destinataire du bouton Support (app-support-bundle-2026-10-013).
+        buildConfigField("String", "SUPPORT_EMAIL", "\"support_essensys@rhinosys.fr\"")
     }
 
     // Signature release (design D9) : keystore hors dépôt (SOPS essensys-ansible/secrets/cloud/android-release.sops.yaml),
