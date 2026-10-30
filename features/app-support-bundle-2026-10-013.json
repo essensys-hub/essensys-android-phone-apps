@@ -25,12 +25,19 @@
   },
   "implementation": {
     "paths": [
+      "app/src/main/java/com/essensys/android/data/support/AppLog.kt",
+      "app/src/main/java/com/essensys/android/data/support/DeviceProbe.kt",
+      "app/src/main/java/com/essensys/android/data/support/SupportDiagnostics.kt",
+      "app/src/main/java/com/essensys/android/data/support/SupportBundle.kt",
+      "app/src/main/java/com/essensys/android/data/support/SupportMail.kt",
       "app/src/main/java/com/essensys/android/data/http/HttpClientFactory.kt",
       "app/src/main/java/com/essensys/android/di/AppContainer.kt",
       "app/src/main/java/com/essensys/android/ui/AppRoot.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/SupportScreen.kt",
       "app/src/main/java/com/essensys/android/ui/screens/MainScreens.kt",
       "app/src/main/java/com/essensys/android/ui/screens/AuthScreens.kt",
       "app/src/main/AndroidManifest.xml",
+      "app/src/main/res/xml/support_paths.xml",
       "app/build.gradle.kts"
     ],
     "primary_surface": "android"
@@ -49,18 +56,25 @@
   "tests": {
     "playwright": [],
     "coverage_must_test": [
-      "diagnostic sans aucun appel inject",
-      "portail injoignable tests appareil renseignes",
-      "session expiree signalee",
-      "mode test actif en attention",
-      "zip contient resume diagnostics journal",
-      "aucun secret dans le zip",
-      "email destinataire objet piece jointe"
+      "diagnostics never send a command",
+      "test mode is a warning",
+      "unreachable portal fails network checks",
+      "expired session is reported",
+      "zip holds summary diagnostics journal",
+      "bundle contains no secret",
+      "email intent targets support zip",
+      "support is reachable before login",
+      "requests are logged without headers body"
     ],
     "smoke_tags": [
       "@nr"
     ],
     "junit": [
+      "app/src/test/java/com/essensys/android/data/support/AppLogTest.kt",
+      "app/src/test/java/com/essensys/android/data/support/SupportDiagnosticsTest.kt",
+      "app/src/test/java/com/essensys/android/data/support/SupportBundleTest.kt",
+      "app/src/test/java/com/essensys/android/data/support/SupportServer.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/SupportFlowTest.kt",
       "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt"
     ]
   },

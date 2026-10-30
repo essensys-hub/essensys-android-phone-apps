@@ -13,4 +13,10 @@ class MainActivity : ComponentActivity() {
         val container = (application as EssensysApp).container
         setContent { EssensysRoot(container) }
     }
+
+    /** Journal du support écrit sur disque à la mise en arrière-plan (design D1). */
+    override fun onStop() {
+        super.onStop()
+        (application as EssensysApp).container.appLog.flush()
+    }
 }

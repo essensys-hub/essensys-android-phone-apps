@@ -27,6 +27,7 @@ Certificat de signature officiel (SHA-256) : `A0:96:0E:61:21:9C:E1:0A:40:81:92:C
 - **Alarme** (cloud seulement) : mise en service et arrêt avec le code à 4 chiffres, jamais conservé par l'application. Masquée dans les releases tant que la commande n'a pas été validée sur une armoire de test.
 - **État de l'armoire** (en ligne ou hors ligne) et **dernière action** en cloud. Les commandes sont désactivées quand l'armoire est hors ligne ; les plannings restent consultables.
 - **Mode test** : le serveur valide les commandes sans que l'armoire les exécute.
+- **Support** (Réglages, ou sous l'écran de connexion) : l'application teste votre téléphone, le réseau, le serveur Essensys et votre armoire, en lecture seule, sans envoyer aucune commande. Elle prépare ensuite un email vers le support avec le résumé et un fichier zip (résultats et journal de l'application, sans mot de passe ni jeton). Vous le relisez avant de l'envoyer.
 - **Thème** Système, Clair ou Sombre, avec la charte du portail.
 
 Les notifications SMS et email et les caméras UniFi Protect restent accessibles depuis le portail web.

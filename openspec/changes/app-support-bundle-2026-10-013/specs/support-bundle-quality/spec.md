@@ -12,11 +12,11 @@ Les tests de essensys-android-phone-apps SHALL couvrir les tests de diagnostic (
 - **THEN** ils passent sans accès réseau à une armoire réelle ni au vrai portail
 
 ### Requirement: Non-régression sur les secrets
-Un test de non-régression `NR-android-19` SHALL produire un bundle avec un token, un cookie LAN, un mot de passe et une clé d'accès connus, puis vérifier qu'aucune de ces valeurs n'apparaît dans les fichiers du zip.
+Un test de non-régression `NR-android-20` SHALL produire un bundle avec un token, un cookie LAN, un mot de passe et une clé d'accès connus, puis vérifier qu'aucune de ces valeurs n'apparaît dans les fichiers du zip.
 
 #### Scenario: Fuite détectée
 - **WHEN** une modification ajoute un en-tête d'authentification ou un corps de requête au journal
-- **THEN** `NR-android-19` échoue
+- **THEN** `NR-android-20` échoue
 
 ### Requirement: Checkup
 `/checkup` SHALL être vert sur essensys-android-phone-apps avant la PR, et un humain SHALL vérifier une fois l'envoi réel vers l'adresse support depuis un téléphone (Wi-Fi puis 4G).

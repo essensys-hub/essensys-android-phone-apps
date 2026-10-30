@@ -127,9 +127,12 @@ private fun HomeTile(tile: Tile, modifier: Modifier) {
 }
 
 @Composable
-fun SettingsScreen(vm: SessionViewModel) {
+fun SettingsScreen(vm: SessionViewModel, onSupport: () -> Unit = {}) {
     val session by vm.session.collectAsStateWithLifecycle()
     ScreenColumn {
+        EssensysCard(title = "Support", description = "Un problème ? L'appli teste votre connexion et prépare un diagnostic à envoyer par email.") {
+            ActionButton("Contacter le support", onSupport, Modifier.fillMaxWidth().testTag("open-support"))
+        }
         EssensysCard(title = "Connexion") {
             Text(
                 if (session.mode == ConnectionMode.CLOUD) "Cloud — ${SessionViewModel.CLOUD_LABEL}" else "Réseau local — ${session.lanHost.substringAfter("://")}",

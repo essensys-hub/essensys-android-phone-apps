@@ -13,6 +13,7 @@ import com.essensys.android.data.session.Hosts
 import com.essensys.android.data.session.LinkState
 import com.essensys.android.data.session.PortalRepository
 import com.essensys.android.data.session.SessionStore
+import com.essensys.android.data.support.AppLog
 import com.essensys.android.ui.theme.ThemePreference
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -33,6 +34,8 @@ class SessionViewModel(
     private val probeCertificate: suspend (String) -> ApiResult<X509Certificate> = { LanTrust.probe(it) },
     private val sessionPeriodMs: Long = SESSION_PERIOD_MS,
     private val lastActionPeriodMs: Long = LAST_ACTION_PERIOD_MS,
+    /** Journal du bouton Support : événements de session, sans identifiant ni secret. */
+    private val log: AppLog = AppLog(),
 ) : ViewModel() {
 
     val session = store.state
@@ -59,6 +62,7 @@ class SessionViewModel(
     fun setMode(mode: ConnectionMode) = viewModelScope.launch {
         if (mode != store.state.value.mode) {
             store.update { it.copy(mode = mode, token = null, lanCookie = null, passwordChangeRequired = false) }
+            log.event("session", "Mode ${mode.name.lowercase()}")
             _link.value = null
             _error.value = null
         }
@@ -99,8 +103,8 @@ class SessionViewModel(
         }
         _busy.value = true
         when (val outcome = auth.login(email, password)) {
-            is LoginOutcome.Failed -> _error.value = outcome.message
-            LoginOutcome.LoggedIn, LoginOutcome.MustChangePassword -> refreshLink()
+            is LoginOutcome.Failed -> { _error.value = outcome.message; log.event("session", "Connexion refusée : ${outcome.message}") }
+            LoginOutcome.LoggedIn, LoginOutcome.MustChangePassword -> { log.event("session", "Connecté (${state.mode.name.lowercase()})"); refreshLink() }
         }
         _busy.value = false
     }
@@ -168,7 +172,9 @@ class SessionViewModel(
                 while (true) {
                     (portal.session() as? ApiResult.Ok)?.let {
                         _account.value = it.value
-                        _gatewayOnline.value = it.value.armoireOnline()
+                        val online = it.value.armoireOnline()
+                        if (online != _gatewayOnline.value) log.event("online", if (online) "Armoire en ligne" else "Armoire hors ligne")
+                        _gatewayOnline.value = online
                     }
                     delay(sessionPeriodMs)
                 }
@@ -186,8 +192,11 @@ class SessionViewModel(
     }
 
     fun setTheme(theme: ThemePreference) = viewModelScope.launch { store.update { it.copy(theme = theme) } }
-    fun setTestMode(enabled: Boolean) = viewModelScope.launch { store.update { it.copy(testMode = enabled) } }
-    fun logout() = viewModelScope.launch { auth.logout(); _link.value = null; _lastAction.value = null }
+    fun setTestMode(enabled: Boolean) = viewModelScope.launch {
+        store.update { it.copy(testMode = enabled) }
+        log.event("settings", if (enabled) "Mode test activé" else "Mode test désactivé")
+    }
+    fun logout() = viewModelScope.launch { auth.logout(); _link.value = null; _lastAction.value = null; log.event("session", "Déconnexion") }
     fun clearMessages() { _error.value = null; _info.value = null }
 
     companion object {

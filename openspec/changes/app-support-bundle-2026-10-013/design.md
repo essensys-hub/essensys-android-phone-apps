@@ -34,11 +34,11 @@ Une coroutine par test, chacune sous `withTimeout` (8 s ; 25 s au total). DNS pa
 Écran poussé (`Feature.SUPPORT`) depuis Réglages et depuis l'écran de connexion : liste des tests avec leur statut au fil de l'eau, puis bouton « Envoyer au support » et « Relancer ». Accessible en release.
 
 ### D6 — Tests
-Unitaires (`AppLog`, assemblage du bundle, statuts), MockWebServer (health OK, délai, 401, LAN), `NR-android-19` (non-fuite des secrets), instrumentés (`SupportFlowTest` : écran, résumé, intent email vérifié par Espresso-Intents, aucun appel `inject`).
+Unitaires (`AppLog`, assemblage du bundle, statuts), MockWebServer (health OK, délai, 401, LAN), `NR-android-20` (non-fuite des secrets), instrumentés (`SupportFlowTest` : écran depuis Réglages et avant connexion, résumé, aucun appel `inject` ; l'intention email est vérifiée directement, et l'ouverture de l'appli est remplacée par `AppContainer.mailer` pour ne pas quitter l'app en test).
 
 ## Risks / Trade-offs
 
-- [Fuite d'un secret dans le journal ou le bundle] → C4 (liste blanche), `LoggingInterceptor` placé avant l'authentification, `NR-android-19`.
+- [Fuite d'un secret dans le journal ou le bundle] → C4 (liste blanche), `LoggingInterceptor` placé avant l'authentification, `NR-android-20`.
 - [Certaines applis email ignorent `EXTRA_STREAM` avec le sélecteur `mailto:`] → validation manuelle sur Gmail et Outlook ; repli sur la feuille de partage documenté.
 - [Les tests durent trop en 4G faible] → délais par test et total plafonné à 25 s ; résultat partiel envoyé quand même.
 - [Journal trop volumineux] → 500 entrées, chemins sans paramètres : quelques dizaines de Ko.

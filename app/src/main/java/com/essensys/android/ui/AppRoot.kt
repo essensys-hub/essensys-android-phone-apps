@@ -67,13 +67,20 @@ import com.essensys.android.ui.screens.ScreenColumn
 import com.essensys.android.ui.screens.SessionViewModel
 import com.essensys.android.ui.screens.SettingsScreen
 import com.essensys.android.ui.screens.ShuttersScreen
+import com.essensys.android.ui.screens.SupportScreen
+import com.essensys.android.ui.screens.SupportViewModel
+import com.essensys.android.data.support.SupportPackage
+import androidx.compose.ui.platform.LocalContext
 import com.essensys.android.ui.theme.Essensys
 import com.essensys.android.ui.theme.EssensysTheme
 
 /** Racine de l'app : thème, puis aiguillage connexion → mot de passe → liaison → commandes. */
 @Composable
 fun EssensysRoot(container: AppContainer) {
-    val sessionVm: SessionViewModel = viewModel { SessionViewModel(container.sessionStore, container.auth, container.portal) }
+    val sessionVm: SessionViewModel = viewModel { SessionViewModel(container.sessionStore, container.auth, container.portal, log = container.appLog) }
+    val supportVm: SupportViewModel = viewModel { SupportViewModel(container.supportDiagnostics, container.supportBundle, container.appLog) }
+    val context = LocalContext.current
+    val sendSupport: (SupportPackage) -> Unit = { container.mailer(context, it) }
     val controlVm: ControlViewModel = viewModel { ControlViewModel(container.control) }
     val heatingVm: HeatingViewModel = viewModel { HeatingViewModel(container.heating) }
     val scenariosVm: ScenariosViewModel = viewModel { ScenariosViewModel(container.scenarios) }
@@ -86,13 +93,23 @@ fun EssensysRoot(container: AppContainer) {
             // Les écrans hors Scaffold gèrent eux-mêmes les barres système (edge-to-edge).
             val insets = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
             when {
-                !session.isAuthenticated -> Column(insets) { LoginScreen(sessionVm) }
+                !session.isAuthenticated -> {
+                    // Support accessible avant connexion (spec support-bundle « Accès au support »).
+                    var support by rememberSaveable { mutableStateOf(false) }
+                    BackHandler(enabled = support) { support = false }
+                    if (support) Column(insets) {
+                        IconButton({ support = false }, Modifier.testTag("back")) {
+                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Retour", tint = Essensys.colors.text)
+                        }
+                        SupportScreen(supportVm, sendSupport)
+                    } else Column(insets) { LoginScreen(sessionVm, onSupport = { support = true }) }
+                }
                 session.passwordChangeRequired -> Column(insets) { PasswordChangeScreen(sessionVm) }
                 else -> {
                     LaunchedEffect(session.mode, session.isAuthenticated) { sessionVm.refreshLink() }
                     when (val l = link) {
                         null -> Column(insets) { ScreenColumn { Text("Chargement…", color = Essensys.colors.textMuted) } }
-                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm)
+                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, supportVm, sendSupport)
                         else -> Column(insets) { LinkScreen(sessionVm, l) }
                     }
                 }
@@ -108,6 +125,8 @@ private fun MainScaffold(
     heatingVm: HeatingViewModel,
     scenariosVm: ScenariosViewModel,
     comfortVm: ComfortViewModel,
+    supportVm: SupportViewModel,
+    sendSupport: (SupportPackage) -> Unit,
 ) {
     var destination by rememberSaveable { mutableStateOf(Destination.HOME) }
     var feature by rememberSaveable { mutableStateOf<Feature?>(null) }
@@ -186,12 +205,13 @@ private fun MainScaffold(
                 Feature.SPRINKLER -> SprinklerScreen(comfortVm, commandsEnabled)
                 Feature.SECURITY_OUTLETS -> SecurityOutletsScreen(comfortVm, commandsEnabled)
                 Feature.ALARM -> AlarmScreen(comfortVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
+                Feature.SUPPORT -> SupportScreen(supportVm, sendSupport)
             } else when (destination) {
                 Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it }, scenariosVm, commandsEnabled)
                 Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled)
                 Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true)
                 Destination.HEATING -> HeatingScreen(heatingVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
-                Destination.SETTINGS -> SettingsScreen(sessionVm)
+                Destination.SETTINGS -> SettingsScreen(sessionVm, onSupport = { feature = Feature.SUPPORT })
             }
         }
     }
