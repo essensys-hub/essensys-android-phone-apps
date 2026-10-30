@@ -2,10 +2,14 @@ package com.essensys.android.data.support
 
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.SessionState
+import com.essensys.android.data.http.ArmoireInfo
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
 
 /** Tests de diagnostic en lecture seule (tâche 1.2 de app-support-bundle-2026-10-013), contre un portail simulé. */
 class SupportDiagnosticsTest {
@@ -105,5 +109,61 @@ class SupportDiagnosticsTest {
         val seen = mutableListOf<String>()
         val r = runBlocking { s.container.supportDiagnostics.run { synchronized(seen) { seen += it.id } } }
         assertEquals(r.checks.map { it.id }.toSet(), seen.toSet())
+    }
+
+    private val now = Instant.parse("2026-10-30T14:00:00Z")
+    private val paris = ZoneId.of("Europe/Paris")
+    private fun rule(lastSeen: String?, online: Boolean = false, gateway: Boolean = false) =
+        SupportDiagnostics.armoireCheck(ArmoireInfo("SC944D-0001", lastSeen, online), gateway, now, paris)
+
+    @Test
+    fun armoire_last_seen_is_local_with_elapsed_time() {
+        val (status, detail) = rule("2026-10-30T13:59:30Z", online = true)
+        assertEquals(CheckStatus.OK, status)
+        assertEquals("Armoire SC944D-0001 · dernier contact 30/10/2026 14:59 (il y a moins d'1 min)", detail)
+    }
+
+    @Test
+    fun armoire_last_seen_rule_follows_gateway_and_age() {
+        val old = "2026-01-22T21:53:02.966462Z"
+        assertEquals(CheckStatus.OK to "Armoire SC944D-0001 · dernier contact 22/01/2026 22:53 (il y a 280 j) · contact assuré par la gateway", rule(old, gateway = true))
+        assertEquals(CheckStatus.WARNING to "Armoire SC944D-0001 · dernier contact 22/01/2026 22:53 (il y a 280 j)", rule(old))
+        assertEquals(CheckStatus.OK, rule("2026-10-30T09:00:00Z").first)
+        assertEquals(CheckStatus.WARNING, rule("2026-10-29T13:00:00Z").first)
+        assertEquals(CheckStatus.OK, rule("2026-10-29T13:00:00+00:00", online = true).first)
+    }
+
+    @Test
+    fun armoire_last_seen_unknown_is_a_warning() {
+        assertEquals(CheckStatus.WARNING to "Armoire SC944D-0001 · dernier contact inconnu", rule(null, online = true))
+        assertEquals(CheckStatus.WARNING, rule("hier").first)
+    }
+
+    @Test
+    fun elapsed_labels_match_the_iphone() {
+        assertEquals("il y a moins d'1 min", SupportDiagnostics.elapsed(Duration.ofSeconds(59)))
+        assertEquals("il y a 3 min", SupportDiagnostics.elapsed(Duration.ofMinutes(3)))
+        assertEquals("il y a 5 h", SupportDiagnostics.elapsed(Duration.ofHours(5)))
+        assertEquals("il y a 47 h", SupportDiagnostics.elapsed(Duration.ofHours(47)))
+        assertEquals("il y a 2 j", SupportDiagnostics.elapsed(Duration.ofHours(48)))
+    }
+
+    // NR: NR-android-21 essensys-hub/essensys-android-phone-apps#33
+    // Une armoire vue il y a 9 mois ne doit plus être « OK » sans explication.
+    @Test
+    fun stale_armoire_last_seen_NR_android_21() {
+        val seen = Instant.now().minus(Duration.ofDays(281)).toString()
+        fun session(gateway: Boolean) = """{"user":{"id":1},"portal_access":true,"gateway":{"id":"gw","online":$gateway},""" +
+            """"armoire":{"no_serie":"X","last_seen":"$seen","online":false}}"""
+        SupportServer(SupportServer.cloud(), sessionJson = session(gateway = true)).use { s ->
+            val r = run(s)
+            assertEquals(CheckStatus.OK, r.status("armoire"))
+            assertTrue(r.detail("armoire"), r.detail("armoire").endsWith("(il y a 281 j) · contact assuré par la gateway"))
+        }
+        SupportServer(SupportServer.cloud(), sessionJson = session(gateway = false)).use { s ->
+            val r = run(s)
+            assertEquals(CheckStatus.WARNING, r.status("armoire"))
+            assertTrue(r.detail("armoire"), r.detail("armoire").endsWith("(il y a 281 j)"))
+        }
     }
 }

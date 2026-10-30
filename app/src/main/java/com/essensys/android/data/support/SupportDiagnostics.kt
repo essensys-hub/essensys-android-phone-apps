@@ -1,5 +1,6 @@
 package com.essensys.android.data.support
 
+import com.essensys.android.data.http.ArmoireInfo
 import com.essensys.android.data.http.EssensysJson
 import com.essensys.android.data.http.HistoryLatest
 import com.essensys.android.data.http.PortalSession
@@ -21,7 +22,10 @@ import java.net.ConnectException
 import java.net.InetAddress
 import java.net.URI
 import java.net.UnknownHostException
+import java.time.Duration
 import java.time.Instant
+import java.time.OffsetDateTime
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Collections
@@ -69,6 +73,7 @@ class SupportDiagnostics(
     private val dns: (String) -> List<InetAddress> = { InetAddress.getAllByName(it).toList() },
     private val clock: () -> Instant = Instant::now,
     private val totalTimeoutMs: Long = TOTAL_TIMEOUT_MS,
+    private val zone: ZoneId = ZoneId.systemDefault(),
 ) {
 
     suspend fun run(onResult: (CheckResult) -> Unit = {}): DiagnosticReport = withContext(Dispatchers.IO) {
@@ -177,7 +182,7 @@ class SupportDiagnostics(
 
         val armoire = session.armoire
         if (armoire == null) emit("armoire", CheckStatus.WARNING, "Aucune armoire vue par le serveur")
-        else emit("armoire", CheckStatus.OK, "Armoire ${armoire.serial ?: "—"} · dernier contact ${armoire.lastSeen ?: "inconnu"}")
+        else armoireCheck(armoire, session.gateway?.online == true, clock(), zone).let { (status, detail) -> emit("armoire", status, detail) }
 
         val gateway = when (session.gateway?.online) { true -> "en ligne"; false -> "hors ligne"; null -> "absente" }
         val rule = "gateway $gateway · armoire ${if (armoire?.online == true) "vue" else "non vue"} depuis 2 min"
@@ -232,6 +237,8 @@ class SupportDiagnostics(
         const val LATENCY_TRIES = 5
         const val SLOW_MS = 1_500.0
         const val MAX_SKEW_S = 120L
+        val STALE_AFTER: Duration = Duration.ofHours(24)
+        private val DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")
 
         /** Ordre d'affichage et libellés, identiques sur l'iPhone. */
         val CHECKS: LinkedHashMap<String, Pair<String, String>> = linkedMapOf(
@@ -253,6 +260,34 @@ class SupportDiagnostics(
             "mode" to ("Réglages" to "Mode de connexion"),
             "test-mode" to ("Réglages" to "Mode test"),
         )
+
+        /**
+         * Test « Armoire associée » (#33) : date locale et durée écoulée. « Attention » si la date manque, ou si
+         * elle a plus de 24 h sans gateway en ligne pour assurer le contact. `online` vient du serveur (2 min).
+         */
+        internal fun armoireCheck(armoire: ArmoireInfo, gatewayOnline: Boolean, now: Instant, zone: ZoneId): Pair<CheckStatus, String> {
+            val prefix = "Armoire ${armoire.serial ?: "—"} · dernier contact"
+            val seen = armoire.lastSeen?.let { parseInstant(it) } ?: return CheckStatus.WARNING to "$prefix inconnu"
+            val age = Duration.between(seen, now).coerceAtLeast(Duration.ZERO)
+            val detail = "$prefix ${DATE.format(seen.atZone(zone))} (${elapsed(age)})"
+            return when {
+                armoire.online -> CheckStatus.OK to detail
+                gatewayOnline -> CheckStatus.OK to "$detail · contact assuré par la gateway"
+                age > STALE_AFTER -> CheckStatus.WARNING to detail
+                else -> CheckStatus.OK to detail
+            }
+        }
+
+        /** Libellé identique sur l'iPhone. */
+        internal fun elapsed(d: Duration): String = when {
+            d < Duration.ofMinutes(1) -> "il y a moins d'1 min"
+            d < Duration.ofHours(1) -> "il y a ${d.toMinutes()} min"
+            d < Duration.ofHours(48) -> "il y a ${d.toHours()} h"
+            else -> "il y a ${d.toDays()} j"
+        }
+
+        private fun parseInstant(raw: String): Instant? =
+            runCatching { Instant.parse(raw) }.recoverCatching { OffsetDateTime.parse(raw).toInstant() }.getOrNull()
 
         internal fun cause(e: Throwable?): String = when (e) {
             null -> "Erreur inconnue"

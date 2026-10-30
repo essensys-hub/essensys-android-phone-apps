@@ -37,6 +37,26 @@ Chaque test SHALL avoir un résultat parmi « OK », « Attention », « Échec 
 - **WHEN** les tests de diagnostic tournent
 - **THEN** aucune requête vers `/inject`, `/inject/batch` ou `/web/actions` n'est émise
 
+### Requirement: Dernier contact de l'armoire
+Le test « Armoire associée » SHALL afficher la date du dernier contact de l'armoire en heure locale (`dd/MM/yyyy HH:mm`), suivie de la durée écoulée (« il y a 3 min », « il y a 5 h », « il y a 281 j »). Son statut SHALL suivre cette règle, dans l'ordre (essensys-hub/essensys-android-phone-apps#33) :
+- date absente ou illisible : « Attention », détail « dernier contact inconnu » ;
+- armoire vue par le serveur depuis 2 min au plus : « OK » ;
+- sinon, gateway en ligne : « OK », avec la mention « contact assuré par la gateway » ;
+- sinon, dernier contact de plus de 24 h : « Attention » ;
+- sinon : « OK ».
+
+#### Scenario: Armoire ancienne derrière une gateway
+- **WHEN** la gateway est en ligne et le dernier contact direct de l'armoire date de 9 mois
+- **THEN** le test est « OK » et le détail montre la date locale, « il y a 281 j » et « contact assuré par la gateway »
+
+#### Scenario: Armoire ancienne sans gateway
+- **WHEN** aucune gateway n'est en ligne et le dernier contact de l'armoire date de plus de 24 h
+- **THEN** le test est « Attention » et le détail montre la date locale et la durée écoulée
+
+#### Scenario: Date inconnue
+- **WHEN** le serveur ne donne pas de date de dernier contact
+- **THEN** le test est « Attention » avec « dernier contact inconnu »
+
 ### Requirement: Journal interne
 L'appli SHALL tenir un journal des 500 derniers événements, conservé entre deux lancements : requêtes HTTP (méthode, chemin sans paramètres, code de réponse, durée, erreur réseau) et événements de l'appli (connexion, déconnexion, changement d'état en ligne, changement de mode, erreurs). Le journal NE SHALL contenir ni corps de requête ou de réponse, ni en-tête d'authentification, ni cookie.
 
