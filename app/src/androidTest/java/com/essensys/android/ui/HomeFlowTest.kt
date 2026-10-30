@@ -3,6 +3,7 @@ package com.essensys.android.ui
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.essensys.android.BuildConfig
 import com.essensys.android.data.session.SessionState
 import com.essensys.android.ui.screens.Destination
 import com.essensys.android.ui.theme.ThemePreference
@@ -99,5 +101,19 @@ class HomeFlowTest {
         assertTrue(compose.onAllNodesWithText("Camille Démo — demo@essensys.fr").fetchSemanticsNodes().isNotEmpty())
         assertTrue(compose.onAllNodesWithText("SC944D-0001", substring = true).fetchSemanticsNodes().isNotEmpty())
         screenshot("10-settings-account-dark")
+    }
+
+    /** #27 : la version apparaît sous le bandeau, sur chaque onglet et sur les écrans poussés. */
+    @Test
+    fun app_version_visible_on_every_screen() {
+        start()
+        val version = "Version ${BuildConfig.VERSION_NAME}"
+        Destination.entries.forEach {
+            compose.onNodeWithTag("nav-${it.name}").performClick()
+            compose.onNodeWithTag("app-version").assertTextEquals(version)
+        }
+        compose.onNodeWithTag("nav-HOME").performClick()
+        compose.onNodeWithTag("open-SCENARIOS").performScrollTo().performClick()
+        compose.onNodeWithTag("app-version").assertTextEquals(version)
     }
 }
