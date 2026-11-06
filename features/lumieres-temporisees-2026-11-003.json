@@ -1,0 +1,101 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "lumieres-temporisees-2026-11-003",
+  "title": "Régler l'extinction automatique des lumières (menu central et fiche lumière)",
+  "status": "proposed",
+  "owner": "nrineau",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#45",
+    "project_item": "PVTI_lADODqt0Wc4BavHTzhGsSFY"
+  },
+  "git": {
+    "branch": "feat/lumieres-temporisees-2026-11-003",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "lumieres-temporisees-2026-11-003",
+    "path": "openspec/changes/lumieres-temporisees-2026-11-003",
+    "proposal": "openspec/changes/lumieres-temporisees-2026-11-003/proposal.md",
+    "tasks": "openspec/changes/lumieres-temporisees-2026-11-003/tasks.md",
+    "specs": [
+      "openspec/changes/lumieres-temporisees-2026-11-003/specs/light-timers-clients/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/src/main/java/com/essensys/android/data/auth/AdminRole.kt",
+      "app/src/main/java/com/essensys/android/data/auth/AuthRepository.kt",
+      "app/src/main/java/com/essensys/android/data/auth/SessionRenewer.kt",
+      "app/src/main/java/com/essensys/android/data/session/SessionStore.kt",
+      "app/src/main/java/com/essensys/android/data/session/PersistentSessionStore.kt",
+      "app/src/main/java/com/essensys/android/data/control/LightTimer.kt",
+      "app/src/main/java/com/essensys/android/data/control/ComfortRepository.kt",
+      "app/src/main/java/com/essensys/android/data/http/Dto.kt",
+      "app/src/main/java/com/essensys/android/data/http/NoArmoireInterceptor.kt",
+      "app/src/main/java/com/essensys/android/ui/AppRoot.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/Destination.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/MainScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightingScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightTimerScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightTimersViewModel.kt"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": []
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "light timer keys and range",
+      "role admin decode a la connexion cloud et LAN",
+      "valeur libre 7 envoyee et affichee",
+      "300 et 0 refuses sans requete",
+      "masque pour un utilisateur simple",
+      "commandes desactivees hors ligne"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ],
+    "junit": [
+      "app/src/test/java/com/essensys/android/data/control/LightTimerTest.kt",
+      "app/src/test/java/com/essensys/android/data/control/LightTimersRepositoryTest.kt",
+      "app/src/test/java/com/essensys/android/data/auth/AdminRoleTest.kt",
+      "app/src/test/java/com/essensys/android/ui/LightTimersViewModelTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/LightTimersFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.5.0 : régler l'extinction automatique des lumières (menu Temporisations et fiche lumière), réservé à l'administrateur (#45).",
+    "target_tag": "android-v2.5.0",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}

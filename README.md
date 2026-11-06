@@ -24,6 +24,7 @@ Certificat de signature officiel (SHA-256) : `A0:96:0E:61:21:9C:E1:0A:40:81:92:C
 - **Chauffe-eau** : marche permanente, heures creuses ou arrêt.
 - **Arrosage** : automatique, 15, 30 ou 60 minutes, ou arrêt.
 - **Prises de sécurité** : état (coupées, pilotées ou inconnu), « Couper » avec confirmation et « Rétablir », en cloud comme en réseau local. Un scénario peut aussi couper ou rétablir les prises (éditeur de scénarios).
+- **Temporisations des lumières** (administrateur de l'armoire seulement) : délai d'extinction automatique de Dressing, WC 1, WC 2, Service, Annexe 1 et Annexe 2, dans le menu « Temporisations » et sous chacune de ces lumières dans Éclairage. 15 min, 30 min, 1 h, Jamais, ou une valeur libre de 1 à 255 minutes. Le rôle est lu à la connexion (cloud : administrateur local ou global ; réseau local : administrateur LAN, ou gateway sans comptes) ; après une mise à jour, reconnectez-vous pour voir le menu.
 - **Armoire en ligne** : le badge « Armoire en ligne » et les commandes suivent la gateway **ou** l'armoire elle-même (dernier contact de moins de 2 min), pour les installations avec ou sans gateway. En réseau local, les commandes restent actives.
 - **Alarme** (cloud seulement) : mise en service et arrêt avec le code à 4 chiffres, jamais conservé par l'application. Masquée dans les releases tant que la commande n'a pas été validée sur une armoire de test.
 - **État de l'armoire** (en ligne ou hors ligne) et **dernière action** en cloud. Les commandes sont désactivées quand l'armoire est hors ligne ; les plannings restent consultables.
