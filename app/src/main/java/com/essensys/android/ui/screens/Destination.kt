@@ -15,6 +15,8 @@ enum class Feature(val title: String) {
     WATER_HEATER("Chauffe-eau"),
     SPRINKLER("Arrosage"),
     SECURITY_OUTLETS("Prises de sécurité"),
+    /** Administrateur seulement (lumieres-temporisees-2026-11-003). */
+    LIGHT_TIMERS("Temporisations"),
     ALARM("Alarme"),
     /** Ouvert depuis les Réglages (app-support-bundle-2026-10-013). */
     SUPPORT("Support"),

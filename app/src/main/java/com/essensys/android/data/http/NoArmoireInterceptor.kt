@@ -42,6 +42,7 @@ class NoArmoireInterceptor(
             Regex("/scenarios/[^/]+/(launch|restore)"),
             Regex("/scenarios/\\d+/?$"), // PUT : enregistrement d'un scénario
             Regex("/api/admin/heating/sync$"),
+            Regex("/api/(portal/admin|admin)/lights/timers/[^/]+$"), // PUT : temporisation d'une lumière
         )
         private val MUTATING = setOf("POST", "PUT", "PATCH", "DELETE")
 

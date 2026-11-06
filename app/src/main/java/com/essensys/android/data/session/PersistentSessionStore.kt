@@ -45,6 +45,7 @@ class PersistentSessionStore private constructor(
         prefs[THEME] = s.theme.name
         prefs[TEST_MODE] = s.testMode
         prefs[PASSWORD_CHANGE] = s.passwordChangeRequired
+        prefs[IS_ADMIN] = s.isAdmin
         prefs.putOrRemove(TOKEN, s.token?.let(cipher::encrypt))
         prefs.putOrRemove(LAN_COOKIE, s.lanCookie?.let(cipher::encrypt))
         prefs.putOrRemove(REMEMBER_TOKEN, s.rememberToken?.let(cipher::encrypt))
@@ -65,6 +66,7 @@ class PersistentSessionStore private constructor(
         private val THEME = stringPreferencesKey("theme")
         private val TEST_MODE = booleanPreferencesKey("test_mode")
         private val PASSWORD_CHANGE = booleanPreferencesKey("password_change_required")
+        private val IS_ADMIN = booleanPreferencesKey("is_admin")
         private val TOKEN = stringPreferencesKey("token_enc")
         private val LAN_COOKIE = stringPreferencesKey("lan_cookie_enc")
         private val REMEMBER_TOKEN = stringPreferencesKey("remember_token_enc")
@@ -92,6 +94,8 @@ class PersistentSessionStore private constructor(
                 theme = prefs[THEME]?.let { runCatching { ThemePreference.valueOf(it) }.getOrNull() } ?: ThemePreference.SYSTEM,
                 testMode = prefs[TEST_MODE] ?: false,
                 passwordChangeRequired = prefs[PASSWORD_CHANGE] ?: false,
+                // Absent d'une session enregistrée avant la gestion du rôle : non administrateur jusqu'à la reconnexion.
+                isAdmin = (prefs[IS_ADMIN] ?: false) && (token != null || lanCookie != null),
                 token = token,
                 lanCookie = lanCookie,
                 rememberToken = rememberToken,

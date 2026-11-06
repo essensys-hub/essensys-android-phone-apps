@@ -81,6 +81,19 @@ class FakeBackend(
                         val values = keys.filter { exchange.containsKey(it) }.joinToString(",") { """{"k":$it,"v":"${exchange.getValue(it)}"}""" }
                         json("""{"values":[$values],"stale":$exchangeStale,"source":"gateway_cache"}""")
                     }
+                    // Temporisations des lumières (lumieres-temporisees-2026-11-003) : cloud et LAN, même contrat.
+                    path == "/api/portal/lights/timers" || path == "/api/admin/lights/timers" -> json(timersJson())
+                    LIGHT_TIMER_PUT.matches(path) && request.method == "PUT" -> {
+                        val id = path.substringAfterLast('/')
+                        val minutes = request.body?.utf8().orEmpty().substringAfter("\"minutes\":").takeWhile { it.isDigit() }.toIntOrNull()
+                        timerPuts += "$path ${request.body?.utf8().orEmpty()}"
+                        when {
+                            !lightTimers.containsKey(id) -> MockResponse.Builder().code(400).body("""{"error":"unknown_light"}""").build()
+                            minutes == null || minutes !in 0..255 -> MockResponse.Builder().code(400).body("""{"error":"invalid_minutes"}""").build()
+                            dryRun(request) -> json("""{"id":"$id","minutes":$minutes,"status":"dry_run"}""")
+                            else -> { lightTimers[id] = minutes; json("""{"id":"$id","minutes":$minutes,"status":"queued"}""") }
+                        }
+                    }
                     path == "/api/admin/heating/sync" -> json(
                         """{"status":"started","sync":{"active":true,"startIndex":13,"byteCount":84,"received":0,"total":84,"chunksTotal":3,"chunksCompleted":0}}""",
                     )
@@ -106,6 +119,20 @@ class FakeBackend(
     val exchange = java.util.concurrent.ConcurrentHashMap<Int, String>(mapOf(566 to "25"))
     var exchangeStale = false
     @Volatile var failNextInject = false
+
+    /** Temporisations servies par `lights/timers` (id → minutes ; -1 = jamais lue, servie `null`). */
+    val lightTimers = java.util.concurrent.ConcurrentHashMap<String, Int>(
+        mapOf("dressing" to -1, "wc1" to -1, "wc2" to -1, "pieceserv" to -1, "ann1" to -1, "ann2" to -1),
+    )
+    val timerPuts = CopyOnWriteArrayList<String>()
+    private val timerLabels = linkedMapOf(
+        "dressing" to ("Dressing" to 521), "wc1" to ("WC 1" to 555), "wc2" to ("WC 2" to 556),
+        "pieceserv" to ("Service" to 557), "ann1" to ("Annexe 1" to 561), "ann2" to ("Annexe 2" to 562),
+    )
+
+    private fun timersJson() = timerLabels.entries.joinToString(",", """{"timers":[""", "]}") { (id, lk) ->
+        """{"id":"$id","label":"${lk.first}","key":${lk.second},"minutes":${lightTimers[id]?.takeIf { it >= 0 } ?: "null"}}"""
+    }
 
     /** Mutations hors inject (scénarios, alarme) : « METHOD chemin », et leurs corps dans le même ordre. */
     val mutations = CopyOnWriteArrayList<String>()
@@ -140,6 +167,7 @@ class FakeBackend(
         requireNotNull(javaClass.classLoader?.getResource("fixtures/$name")) { "fixture $name" }.readText()
 
     private companion object {
+        val LIGHT_TIMER_PUT = Regex("^/api/(portal/admin|admin)/lights/timers/[^/]+$")
         val SCENARIOS = Regex("^/api/(portal/)?scenarios(/.*)?$")
     }
 

@@ -30,7 +30,14 @@ import kotlinx.serialization.Serializable
 )
 
 /** Réponse de la gateway au login : seule la fin de la session mémorisée nous intéresse. */
-@Serializable data class LanLoginResponse(@SerialName("remember_expires_at") val rememberExpiresAt: String? = null)
+@Serializable data class LanLoginResponse(
+    @SerialName("remember_expires_at") val rememberExpiresAt: String? = null,
+    /** `user.role` n'est renvoyé que par l'IAM LAN (`lan_admin`, `lan_user`, `lan_guest`). */
+    val user: LanUser? = null,
+)
+
+/** `GET /health` de la gateway : `lan_iam_enabled` false = pas d'IAM, donc pas de rôle. */
+@Serializable data class GatewayHealth(@SerialName("lan_iam_enabled") val lanIamEnabled: Boolean? = null)
 
 @Serializable data class RememberRefreshRequest(@SerialName("remember_token") val rememberToken: String)
 
@@ -66,6 +73,13 @@ import kotlinx.serialization.Serializable
     val stale: Boolean = false,
     val source: String? = null,
 )
+
+// Temporisations des lumières (change lumieres-temporisees-2026-11-003, « Contrat d'API »).
+@Serializable data class LightTimerDto(val id: String, val label: String? = null, val key: Int? = null, val minutes: Int? = null)
+
+@Serializable data class LightTimersResponse(val timers: List<LightTimerDto> = emptyList())
+
+@Serializable data class LightTimerRequest(val minutes: Int)
 
 @Serializable data class InjectBatchRequest(val params: List<KeyValue>)
 

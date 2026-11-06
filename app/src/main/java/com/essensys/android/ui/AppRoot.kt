@@ -67,6 +67,8 @@ import com.essensys.android.ui.screens.PasswordChangeScreen
 import com.essensys.android.ui.screens.ScreenColumn
 import com.essensys.android.ui.screens.SessionViewModel
 import com.essensys.android.ui.screens.SettingsScreen
+import com.essensys.android.ui.screens.LightTimersScreen
+import com.essensys.android.ui.screens.LightTimersViewModel
 import com.essensys.android.ui.screens.ShuttersScreen
 import com.essensys.android.ui.screens.SupportScreen
 import com.essensys.android.ui.screens.SupportViewModel
@@ -86,6 +88,7 @@ fun EssensysRoot(container: AppContainer) {
     val heatingVm: HeatingViewModel = viewModel { HeatingViewModel(container.heating) }
     val scenariosVm: ScenariosViewModel = viewModel { ScenariosViewModel(container.scenarios) }
     val comfortVm: ComfortViewModel = viewModel { ComfortViewModel(container.comfort) }
+    val timersVm: LightTimersViewModel = viewModel { LightTimersViewModel(container.comfort) }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     val link by sessionVm.link.collectAsStateWithLifecycle()
 
@@ -110,7 +113,7 @@ fun EssensysRoot(container: AppContainer) {
                     LaunchedEffect(session.mode, session.isAuthenticated) { sessionVm.refreshLink() }
                     when (val l = link) {
                         null -> Column(insets) { ScreenColumn { Text("Chargement…", color = Essensys.colors.textMuted) } }
-                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, supportVm, sendSupport)
+                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, timersVm, supportVm, sendSupport)
                         else -> Column(insets) { LinkScreen(sessionVm, l) }
                     }
                 }
@@ -126,6 +129,7 @@ private fun MainScaffold(
     heatingVm: HeatingViewModel,
     scenariosVm: ScenariosViewModel,
     comfortVm: ComfortViewModel,
+    timersVm: LightTimersViewModel,
     supportVm: SupportViewModel,
     sendSupport: (SupportPackage) -> Unit,
 ) {
@@ -211,11 +215,15 @@ private fun MainScaffold(
                 Feature.WATER_HEATER -> WaterHeaterScreen(comfortVm, commandsEnabled)
                 Feature.SPRINKLER -> SprinklerScreen(comfortVm, commandsEnabled)
                 Feature.SECURITY_OUTLETS -> SecurityOutletsScreen(comfortVm, commandsEnabled)
+                // Réservé à l'administrateur : le serveur refuse les autres, l'écran n'est qu'un masquage.
+                Feature.LIGHT_TIMERS -> if (session.isAdmin) LightTimersScreen(timersVm, commandsEnabled) else ScreenColumn {
+                    Text("Réservé à l'administrateur de l'armoire.", Modifier.testTag("timers-forbidden"), color = Essensys.colors.textMuted)
+                }
                 Feature.ALARM -> AlarmScreen(comfortVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
                 Feature.SUPPORT -> SupportScreen(supportVm, sendSupport)
             } else when (destination) {
-                Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it }, scenariosVm, commandsEnabled)
-                Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled)
+                Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it }, scenariosVm, commandsEnabled, isAdmin = session.isAdmin)
+                Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled, timersVm = timersVm.takeIf { session.isAdmin })
                 Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true)
                 Destination.HEATING -> HeatingScreen(heatingVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
                 Destination.SETTINGS -> SettingsScreen(sessionVm, onSupport = { feature = Feature.SUPPORT })

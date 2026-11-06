@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.PlayCircle
 import androidx.compose.material.icons.outlined.Power
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.Thermostat
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.material.icons.outlined.Window
 import androidx.compose.material3.Icon
@@ -75,6 +76,8 @@ fun HomeScreen(
     onOpenFeature: (Feature) -> Unit,
     scenariosVm: ScenariosViewModel,
     commandsEnabled: Boolean,
+    /** Les tuiles réservées à l'administrateur de l'armoire (Temporisations) n'apparaissent qu'à lui. */
+    isAdmin: Boolean = false,
 ) {
     val scenarios by scenariosVm.state.collectAsStateWithLifecycle()
     val tiles = buildList {
@@ -85,6 +88,7 @@ fun HomeScreen(
         add(Tile("open-WATER_HEATER", "Chauffe-eau", "Marche, heures creuses, arrêt", Icons.Outlined.WaterDrop) { onOpenFeature(Feature.WATER_HEATER) })
         add(Tile("open-SPRINKLER", "Arrosage", "Programmation jardin", Icons.Outlined.Grass) { onOpenFeature(Feature.SPRINKLER) })
         add(Tile("open-SECURITY_OUTLETS", "Prises de sécurité", "Couper et rétablir", Icons.Outlined.Power) { onOpenFeature(Feature.SECURITY_OUTLETS) })
+        if (isAdmin) add(Tile("open-LIGHT_TIMERS", "Temporisations", "Extinction automatique des lumières", Icons.Outlined.Timer) { onOpenFeature(Feature.LIGHT_TIMERS) })
         if (BuildConfig.ALARM_ENABLED) add(Tile("open-ALARM", "Alarme", "Mise en service et arrêt", Icons.Outlined.Shield) { onOpenFeature(Feature.ALARM) })
     }
     ScreenColumn {
