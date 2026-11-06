@@ -46,7 +46,9 @@
     "i18n_keys": [],
     "screenshots": [
       "img/v2/02-home-light.png",
-      "img/v2/09-heating-light.png"
+      "img/v2/09-heating-light.png",
+      "img/v2/14-login-remember-light.png",
+      "img/v2/15-settings-remember-light.png"
     ]
   },
   "tests": {

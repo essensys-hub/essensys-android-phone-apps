@@ -1,15 +1,20 @@
 package com.essensys.android.ui
 
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.SessionState
 import org.junit.After
@@ -19,6 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -32,6 +38,13 @@ class RememberMeFlowTest {
     @After fun tearDown() = backend.close()
 
     private fun exists(tag: String) = runCatching { compose.onNodeWithTag(tag).assertExists() }.isSuccess
+
+    private fun screenshot(name: String) {
+        val dir = File(InstrumentationRegistry.getInstrumentation().targetContext.getExternalFilesDir(null), "screens").apply { mkdirs() }
+        File(dir, "$name.png").outputStream().use {
+            compose.onRoot().captureToImage().asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, it)
+        }
+    }
 
     private fun login() {
         compose.onNodeWithTag("email").performTextInput("demo@essensys.fr")
@@ -62,11 +75,13 @@ class RememberMeFlowTest {
         compose.setContent { EssensysRoot(backend.container()) }
         compose.onNodeWithTag("remember-me").performClick()
         compose.onNodeWithTag("remember-me").assertIsOn()
+        screenshot("14-login-remember-light")
         login()
         assertTrue(loginBody().contains("\"remember_me\":true"))
         openSettings()
         val expected = backend.rememberExpiresAt.atZone(ZoneId.systemDefault()).format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
         compose.onNodeWithTag("remember-until").performScrollTo().assertTextEquals("Connecté jusqu'au $expected")
+        screenshot("15-settings-remember-light")
     }
 
     @Test

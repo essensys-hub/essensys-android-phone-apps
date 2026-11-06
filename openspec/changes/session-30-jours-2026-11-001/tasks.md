@@ -13,5 +13,5 @@
 ## 3. Qualité et livraison (#37)
 
 - [x] 3.1 Ajouter `NR-android-22` (aucune prolongation par l'usage : renouvellements quotidiens pendant 29 jours, refus le 31e) et `NR-android-23` (ni mot de passe, ni jeton, ni session mémorisée dans le journal et le bundle Support) avec une horloge contrôlée ; vérifier par leur passage dans les tests unitaires, puis les scénarios de reprise et de fin de session sur émulateur dans les deux modes, sans armoire réelle
-- [ ] 3.2 CI verte, `/checkup` vert, captures de l'écran de connexion et des Réglages sur #39, README et version 2.4.0
+- [x] 3.2 CI verte, `/checkup` vert, captures de l'écran de connexion et des Réglages sur #39, README et version 2.4.0 (la version est posée par le tag `android-v2.4.0`, pas dans le dépôt)
 - [ ] 3.3 Une fois les backends déployés : vérification réelle par un humain (connexion cochée, redémarrage du téléphone, lendemain), puis release `android-v2.4.0`
