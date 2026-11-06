@@ -1,0 +1,102 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "noms-personnalises-2026-11-002",
+  "title": "Noms personnalisés des pièces et objets, synchronisés partout",
+  "status": "proposed",
+  "owner": "rhinosys",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#41",
+    "project_item": "PVTI_lADODqt0Wc4BavHTzhGkOlI"
+  },
+  "git": {
+    "branch": "feat/noms-personnalises-2026-11-002",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "noms-personnalises-2026-11-002",
+    "path": "openspec/changes/noms-personnalises-2026-11-002",
+    "proposal": "openspec/changes/noms-personnalises-2026-11-002/proposal.md",
+    "design": "openspec/changes/noms-personnalises-2026-11-002/design.md",
+    "tasks": "openspec/changes/noms-personnalises-2026-11-002/tasks.md",
+    "specs": [
+      "openspec/changes/noms-personnalises-2026-11-002/specs/custom-names-app/spec.md",
+      "openspec/changes/noms-personnalises-2026-11-002/specs/custom-names-app-quality/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/src/main/java/com/essensys/android/data/control/IndexTable.kt",
+      "app/src/main/java/com/essensys/android/data/session/PersistentSessionStore.kt",
+      "app/src/main/java/com/essensys/android/data/session/SessionStore.kt",
+      "app/src/main/java/com/essensys/android/data/auth/AuthRepository.kt",
+      "app/src/main/java/com/essensys/android/data/http/ApiCaller.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/AuthScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/MainScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightingScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ShuttersScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/HeatingScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ScenariosScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/ComfortScreens.kt",
+      "app/build.gradle.kts"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": [
+      "img/v2/02-home-light.png",
+      "img/v2/09-heating-light.png"
+    ]
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "custom name resolves forced then room then default",
+      "room rename propagates to chevet and shutter",
+      "forced name wins over room name",
+      "reset restores inherited name",
+      "non admin has no names screen",
+      "missing names api falls back to defaults",
+      "rename never changes an index",
+      "names are absent from journal and support bundle"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ],
+    "junit": [
+      "app/src/test/java/com/essensys/android/data/auth/AuthRepositoryTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/RememberMeFlowTest.kt"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.5.0 : noms personnalisés des pièces et objets (#41).",
+    "target_tag": "android-v2.5.0",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}
