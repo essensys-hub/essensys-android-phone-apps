@@ -5,7 +5,12 @@ import kotlinx.serialization.Serializable
 
 // Contrats lus dans essensys-user-portal-backend et essensys-server-backend (design D5 bis).
 
-@Serializable data class LoginRequest(val email: String, val password: String)
+/** `remember_me` n'est envoyé que coché (nul, donc omis, sinon) : la requête reste identique à celle d'avant. */
+@Serializable data class LoginRequest(
+    val email: String,
+    val password: String,
+    @SerialName("remember_me") val rememberMe: Boolean? = null,
+)
 
 @Serializable data class CloudUser(
     val id: Long? = null,
@@ -19,7 +24,17 @@ import kotlinx.serialization.Serializable
     val token: String,
     val user: CloudUser? = null,
     @SerialName("password_change_required") val passwordChangeRequired: Boolean = false,
+    /** Présents seulement si la session mémorisée a été demandée et prise en charge (RFC 3339 UTC pour la date). */
+    @SerialName("remember_token") val rememberToken: String? = null,
+    @SerialName("remember_expires_at") val rememberExpiresAt: String? = null,
 )
+
+/** Réponse de la gateway au login : seule la fin de la session mémorisée nous intéresse. */
+@Serializable data class LanLoginResponse(@SerialName("remember_expires_at") val rememberExpiresAt: String? = null)
+
+@Serializable data class RememberRefreshRequest(@SerialName("remember_token") val rememberToken: String)
+
+@Serializable data class LogoutRequest(@SerialName("remember_token") val rememberToken: String)
 
 @Serializable data class PasswordChangeRequest(
     @SerialName("current_password") val currentPassword: String,

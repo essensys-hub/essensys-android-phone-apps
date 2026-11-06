@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.essensys.android.ui.theme.ThemePreference
@@ -19,7 +20,7 @@ import kotlinx.coroutines.sync.withLock
 private val Context.essensysDataStore: DataStore<Preferences> by preferencesDataStore(name = "essensys_session")
 
 /**
- * Session persistée (spec mobile-auth « Stockage sécurisé ») : préférences en clair, jeton et cookie
+ * Session persistée (spec mobile-auth « Stockage sécurisé ») : préférences en clair, jeton, cookie et session mémorisée
  * chiffrés par [SecretCipher]. Le mot de passe n'est jamais stocké.
  */
 class PersistentSessionStore private constructor(
@@ -46,6 +47,8 @@ class PersistentSessionStore private constructor(
         prefs[PASSWORD_CHANGE] = s.passwordChangeRequired
         prefs.putOrRemove(TOKEN, s.token?.let(cipher::encrypt))
         prefs.putOrRemove(LAN_COOKIE, s.lanCookie?.let(cipher::encrypt))
+        prefs.putOrRemove(REMEMBER_TOKEN, s.rememberToken?.let(cipher::encrypt))
+        if (s.rememberExpiresAtMs == null) prefs.remove(REMEMBER_EXPIRES_AT) else prefs[REMEMBER_EXPIRES_AT] = s.rememberExpiresAtMs
         prefs.putOrRemove(PINNED_CA, s.pinnedLanCertPem)
     }
 
@@ -64,6 +67,8 @@ class PersistentSessionStore private constructor(
         private val PASSWORD_CHANGE = booleanPreferencesKey("password_change_required")
         private val TOKEN = stringPreferencesKey("token_enc")
         private val LAN_COOKIE = stringPreferencesKey("lan_cookie_enc")
+        private val REMEMBER_TOKEN = stringPreferencesKey("remember_token_enc")
+        private val REMEMBER_EXPIRES_AT = longPreferencesKey("remember_expires_at_ms")
         private val PINNED_CA = stringPreferencesKey("pinned_lan_cert_pem")
 
         /** Purge le stockage v1.0.0 ; retourne true si des identifiants en clair ont été supprimés. */
@@ -78,14 +83,20 @@ class PersistentSessionStore private constructor(
         suspend fun open(context: Context, cipher: SecretCipher = KeystoreSecretCipher()): PersistentSessionStore {
             val dataStore = context.applicationContext.essensysDataStore
             val prefs = dataStore.data.first()
+            val token = prefs[TOKEN]?.let(cipher::decrypt)
+            val lanCookie = prefs[LAN_COOKIE]?.let(cipher::decrypt)
+            val rememberToken = prefs[REMEMBER_TOKEN]?.let(cipher::decrypt)
             val initial = SessionState(
                 mode = prefs[MODE]?.let { runCatching { ConnectionMode.valueOf(it) }.getOrNull() } ?: ConnectionMode.CLOUD,
                 lanHost = prefs[LAN_HOST] ?: Hosts.LAN_DEFAULT,
                 theme = prefs[THEME]?.let { runCatching { ThemePreference.valueOf(it) }.getOrNull() } ?: ThemePreference.SYSTEM,
                 testMode = prefs[TEST_MODE] ?: false,
                 passwordChangeRequired = prefs[PASSWORD_CHANGE] ?: false,
-                token = prefs[TOKEN]?.let(cipher::decrypt),
-                lanCookie = prefs[LAN_COOKIE]?.let(cipher::decrypt),
+                token = token,
+                lanCookie = lanCookie,
+                rememberToken = rememberToken,
+                // Une date sans session derrière (secret illisible après un changement de clé) ne doit rien afficher.
+                rememberExpiresAtMs = prefs[REMEMBER_EXPIRES_AT]?.takeIf { rememberToken != null || lanCookie != null },
                 pinnedLanCertPem = prefs[PINNED_CA],
             )
             return PersistentSessionStore(dataStore, cipher, initial)

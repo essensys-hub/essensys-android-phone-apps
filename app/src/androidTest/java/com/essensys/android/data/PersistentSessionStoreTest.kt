@@ -12,6 +12,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -44,5 +45,36 @@ class PersistentSessionStoreTest {
 
         reopened.clearSession()
         assertEquals(null, PersistentSessionStore.open(context).state.value.token)
+    }
+
+    @Test
+    fun remember_session_survives_reopen_is_encrypted_and_cleared_with_the_session() = runBlocking {
+        val secret = "remember-SECRET-0123456789"
+        val store = PersistentSessionStore.open(context)
+        store.update {
+            it.copy(mode = ConnectionMode.CLOUD, token = "jwt-secret-value", rememberToken = secret, rememberExpiresAtMs = 1_796_889_600_000L)
+        }
+        val reopened = PersistentSessionStore.open(context)
+        assertEquals(secret, reopened.state.value.rememberToken)
+        assertEquals(1_796_889_600_000L, reopened.state.value.rememberExpiresAtMs)
+        // Jamais écrit en clair : le fichier de préférences ne contient ni le jeton mémorisé ni le jeton d'accès.
+        val prefsFile = File(context.filesDir, "datastore/essensys_session.preferences_pb")
+        assertTrue(prefsFile.exists())
+        val raw = prefsFile.readBytes().toString(Charsets.ISO_8859_1)
+        assertFalse(raw.contains(secret))
+        assertFalse(raw.contains("jwt-secret-value"))
+
+        reopened.clearSession()
+        val cleared = PersistentSessionStore.open(context).state.value
+        assertEquals(null, cleared.rememberToken)
+        assertEquals(null, cleared.rememberExpiresAtMs)
+    }
+
+    @Test
+    fun the_session_ended_notice_is_not_persisted() = runBlocking {
+        val store = PersistentSessionStore.open(context)
+        store.update { it.copy(sessionEnded = true) }
+        assertFalse(PersistentSessionStore.open(context).state.value.sessionEnded)
+        store.clearSession()
     }
 }
