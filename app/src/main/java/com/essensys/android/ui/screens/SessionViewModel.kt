@@ -61,7 +61,7 @@ class SessionViewModel(
 
     fun setMode(mode: ConnectionMode) = viewModelScope.launch {
         if (mode != store.state.value.mode) {
-            store.update { it.copy(mode = mode, token = null, lanCookie = null, passwordChangeRequired = false) }
+            store.update { it.copy(mode = mode, token = null, lanCookie = null, passwordChangeRequired = false, rememberToken = null, rememberExpiresAtMs = null) }
             log.event("session", "Mode ${mode.name.lowercase()}")
             _link.value = null
             _error.value = null
@@ -85,7 +85,7 @@ class SessionViewModel(
         return true
     }
 
-    fun login(email: String, password: String) = viewModelScope.launch {
+    fun login(email: String, password: String, rememberMe: Boolean = false) = viewModelScope.launch {
         _error.value = null
         val state = store.state.value
         if (state.mode == ConnectionMode.LAN && state.pinnedLanCertPem == null) {
@@ -102,7 +102,7 @@ class SessionViewModel(
             return@launch
         }
         _busy.value = true
-        when (val outcome = auth.login(email, password)) {
+        when (val outcome = auth.login(email, password, rememberMe)) {
             is LoginOutcome.Failed -> { _error.value = outcome.message; log.event("session", "Connexion refusée : ${outcome.message}") }
             LoginOutcome.LoggedIn, LoginOutcome.MustChangePassword -> { log.event("session", "Connecté (${state.mode.name.lowercase()})"); refreshLink() }
         }
@@ -127,12 +127,16 @@ class SessionViewModel(
             return@launch
         }
         _busy.value = true
-        val wasLan = store.state.value.mode == ConnectionMode.LAN
+        val before = store.state.value
         when (val r = auth.changePassword(current, new)) {
             is ApiResult.Err -> _error.value = r.error.userMessage
             is ApiResult.Ok -> {
                 _error.value = null
-                _info.value = if (wasLan) "Mot de passe changé. La gateway a fermé vos sessions : reconnectez-vous." else "Mot de passe mis à jour."
+                _info.value = when {
+                    before.mode == ConnectionMode.LAN -> "Mot de passe changé. La gateway a fermé vos sessions : reconnectez-vous."
+                    before.rememberToken != null -> "Mot de passe changé. Vos sessions mémorisées sont fermées : reconnectez-vous."
+                    else -> "Mot de passe mis à jour."
+                }
             }
         }
         _busy.value = false

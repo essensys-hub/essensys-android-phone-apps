@@ -1,6 +1,7 @@
 package com.essensys.android.di
 
 import com.essensys.android.data.auth.AuthRepository
+import com.essensys.android.data.auth.SessionRenewer
 import com.essensys.android.data.control.ComfortRepository
 import com.essensys.android.data.control.ControlRepository
 import com.essensys.android.data.control.HeatingRepository
@@ -38,11 +39,16 @@ class AppContainer(
     supportDir: File = File(System.getProperty("java.io.tmpdir"), "essensys-support"),
     /** Ouvre l'appli email ; remplacé par les tests pour vérifier le message sans quitter l'app. */
     val mailer: (Context, SupportPackage) -> Unit = SupportMail::send,
+    /** Horloge du renouvellement de la session mémorisée ; remplacée par les tests (30 jours simulés). */
+    clock: () -> Long = System::currentTimeMillis,
 ) {
     val cloudClient: OkHttpClient = HttpClientFactory.create(sessionStore, guardNoArmoire, configureCloud, appLog)
     val lanClient: OkHttpClient = HttpClientFactory.create(sessionStore, guardNoArmoire, configureLan, appLog)
     private val api = ApiCaller {
         if (sessionStore.state.value.mode == ConnectionMode.CLOUD) cloudClient else lanClient
+    }
+    init {
+        api.renewer = SessionRenewer(api, sessionStore, appLog, clock)
     }
     val auth = AuthRepository(api, sessionStore)
     val control = ControlRepository(api, sessionStore, auth)
