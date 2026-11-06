@@ -1,0 +1,1 @@
+{"token":"jwt-demo","user":{"id":1,"email":"demo@essensys.fr","role":"guest_local","first_name":"Démo","last_name":"Portail"},"password_change_required":false,"remember_token":"remember-demo-0123456789","remember_expires_at":"2026-12-10T08:00:00Z"}

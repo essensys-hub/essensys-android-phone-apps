@@ -3,9 +3,12 @@ package com.essensys.android.ui.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.Alignment
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -43,6 +46,8 @@ fun LoginScreen(vm: SessionViewModel, onSupport: () -> Unit = {}) {
     val pending by vm.pendingCertificate.collectAsStateWithLifecycle()
     var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    // Décochée à chaque ouverture de l'écran : un téléphone prêté ne garde pas la session par erreur.
+    var rememberMe by rememberSaveable { mutableStateOf(false) }
     var lanHost by rememberSaveable(session.lanHost) { mutableStateOf(session.lanHost) }
 
     ScreenColumn {
@@ -85,12 +90,25 @@ fun LoginScreen(vm: SessionViewModel, onSupport: () -> Unit = {}) {
                 modifier = Modifier.fillMaxWidth().testTag("password"),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
             )
+            Row(
+                Modifier.fillMaxWidth().clickable { rememberMe = !rememberMe },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Checkbox(checked = rememberMe, onCheckedChange = { rememberMe = it }, modifier = Modifier.testTag("remember-me"))
+                Text("Se souvenir de moi (30 jours)", color = Essensys.colors.text)
+            }
+            if (session.sessionEnded) {
+                Text(
+                    "Votre session mémorisée a pris fin : reconnectez-vous.",
+                    Modifier.testTag("session-ended"), style = MaterialTheme.typography.bodySmall, color = Essensys.colors.danger,
+                )
+            }
             FeedbackBanner(error?.let { Feedback(it, Feedback.Kind.ERROR) } ?: info?.let { Feedback(it, Feedback.Kind.INFO) })
             ActionButton(
                 label = "Se connecter",
                 onClick = {
                     val hostOk = session.mode == ConnectionMode.CLOUD || vm.setLanHost(lanHost)
-                    if (hostOk) vm.login(email, password)
+                    if (hostOk) vm.login(email, password, rememberMe)
                 },
                 modifier = Modifier.fillMaxWidth().testTag("login"),
                 loading = busy,

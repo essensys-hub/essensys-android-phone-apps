@@ -9,6 +9,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Instant
 
 class AuthRepositoryTest {
 
@@ -114,6 +115,97 @@ class AuthRepositoryTest {
             t.enqueue(403, """{"error":"account_forbidden","redirect":"/maintenance/"}""")
             t.container.portal.gatewayOnline()
             assertNull(t.store.state.value.token)
+        }
+    }
+
+    // --- Session mémorisée (tâche 1.2 de session-30-jours-2026-11-001) ---
+
+    private val rememberExpiry = Instant.parse("2026-12-10T08:00:00Z").toEpochMilli()
+
+    @Test
+    fun cloud_login_with_remember_stores_session_and_sends_the_option() = runTest {
+        TestServer().use { t ->
+            t.enqueue(200, t.fixture("cloud_login_remember.json"))
+            assertEquals(LoginOutcome.LoggedIn, t.container.auth.login("demo@essensys.fr", "secret123", rememberMe = true))
+            val state = t.store.state.value
+            assertEquals("jwt-demo", state.token)
+            assertEquals("remember-demo-0123456789", state.rememberToken)
+            assertEquals(rememberExpiry, state.rememberExpiresAtMs)
+            assertTrue(t.server.takeRequest().body!!.utf8().contains("\"remember_me\":true"))
+        }
+    }
+
+    @Test
+    fun cloud_login_without_the_option_sends_nothing_and_keeps_nothing() = runTest {
+        TestServer().use { t ->
+            // Même si le serveur renvoyait une session mémorisée, l'app n'en a pas demandé : elle ne la garde pas.
+            t.enqueue(200, t.fixture("cloud_login_remember.json"))
+            assertEquals(LoginOutcome.LoggedIn, t.container.auth.login("demo@essensys.fr", "secret123"))
+            val state = t.store.state.value
+            assertNull(state.rememberToken)
+            assertNull(state.rememberExpiresAtMs)
+            assertFalse(t.server.takeRequest().body!!.utf8().contains("remember_me"))
+        }
+    }
+
+    @Test
+    fun server_without_remember_support_logs_in_like_an_unchecked_box() = runTest {
+        TestServer().use { t ->
+            t.enqueue(200, t.fixture("cloud_login_ok.json"))
+            assertEquals(LoginOutcome.LoggedIn, t.container.auth.login("demo@essensys.fr", "secret123", rememberMe = true))
+            val state = t.store.state.value
+            assertEquals("jwt-demo", state.token)
+            assertNull(state.rememberToken)
+            assertNull(state.rememberExpiresAtMs)
+        }
+    }
+
+    @Test
+    fun remember_session_is_not_kept_when_the_password_must_change() = runTest {
+        TestServer().use { t ->
+            t.enqueue(200, t.fixture("cloud_login_remember_temp_password.json"))
+            assertEquals(LoginOutcome.MustChangePassword, t.container.auth.login("demo@essensys.fr", "Tmp-pass-123", rememberMe = true))
+            assertNull(t.store.state.value.rememberToken)
+            assertEquals("jwt-temp", t.store.state.value.token)
+        }
+    }
+
+    @Test
+    fun lan_login_with_remember_keeps_the_end_date_and_the_cookie() = runTest {
+        TestServer(mode = ConnectionMode.LAN).use { t ->
+            t.enqueue(
+                200, t.fixture("lan_login_remember.json"),
+                "Set-Cookie" to "essensys_lan_session=abc123; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000",
+            )
+            assertEquals(LoginOutcome.LoggedIn, t.container.auth.login("admin@essensys.local", "secret123", rememberMe = true))
+            val state = t.store.state.value
+            assertEquals("abc123", state.lanCookie)
+            assertEquals(rememberExpiry, state.rememberExpiresAtMs)
+            assertNull(state.rememberToken)
+            assertTrue(t.server.takeRequest().body!!.utf8().contains("\"remember_me\":true"))
+        }
+    }
+
+    @Test
+    fun lan_gateway_without_remember_storage_gives_a_classic_session() = runTest {
+        TestServer(mode = ConnectionMode.LAN).use { t ->
+            t.enqueue(
+                200, t.fixture("lan_login_ok.json"),
+                "Set-Cookie" to "essensys_lan_session=abc123; Path=/; HttpOnly; Secure; Max-Age=604800",
+            )
+            assertEquals(LoginOutcome.LoggedIn, t.container.auth.login("admin@essensys.local", "secret123", rememberMe = true))
+            assertEquals("abc123", t.store.state.value.lanCookie)
+            assertNull(t.store.state.value.rememberExpiresAtMs)
+        }
+    }
+
+    @Test
+    fun a_new_login_resets_the_session_ended_notice() = runTest {
+        TestServer().use { t ->
+            t.store.update { it.copy(sessionEnded = true) }
+            t.enqueue(200, t.fixture("cloud_login_ok.json"))
+            t.container.auth.login("demo@essensys.fr", "secret123")
+            assertFalse(t.store.state.value.sessionEnded)
         }
     }
 }

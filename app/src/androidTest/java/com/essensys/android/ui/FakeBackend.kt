@@ -28,8 +28,16 @@ class FakeBackend(
     var hasArmoire: Boolean = true,
     /** `armoire.online` ; par défaut, l'armoire est vue si la gateway est en ligne. */
     var armoireOnline: Boolean? = null,
+    /** Session mémorisée (spec remember-me) : le login la renvoie si la case a été cochée. */
+    var rememberSupported: Boolean = true,
+    /** Jetons d'accès que le portail refuse (401), pour simuler un accès de 24 h expiré. */
+    var unauthorizedTokens: Set<String> = emptySet(),
 ) : AutoCloseable {
     val injections = CopyOnWriteArrayList<String>()
+
+    /** Fin de la session mémorisée renvoyée au login : 30 jours après le test. */
+    val rememberExpiresAt: java.time.Instant = java.time.Instant.now().plus(30, java.time.temporal.ChronoUnit.DAYS)
+    val refreshCount = java.util.concurrent.atomic.AtomicInteger()
     val requests = CopyOnWriteArrayList<RecordedRequest>()
 
     val server = MockWebServer().apply {
@@ -37,10 +45,22 @@ class FakeBackend(
             override fun dispatch(request: RecordedRequest): MockResponse {
                 requests += request
                 val path = request.url.encodedPath
+                val bearer = request.headers["Authorization"]?.removePrefix("Bearer ")
+                if (bearer != null && bearer in unauthorizedTokens && !path.startsWith("/api/auth/")) {
+                    return MockResponse.Builder().code(401).body("Unauthorized\n").build()
+                }
                 return when {
-                    path == "/api/auth/login" -> json(
-                        """{"token":"jwt-test","user":{"id":1,"email":"demo@essensys.fr","role":"guest_local"},"password_change_required":$temporaryPassword}""",
-                    )
+                    path == "/api/auth/login" -> {
+                        val remember = rememberSupported && request.body?.utf8().orEmpty().contains(""""remember_me":true""")
+                        val extra = if (remember) ""","remember_token":"remember-fake-0123456789","remember_expires_at":"$rememberExpiresAt"""" else ""
+                        json(
+                            """{"token":"jwt-test","user":{"id":1,"email":"demo@essensys.fr","role":"guest_local"},"password_change_required":$temporaryPassword$extra}""",
+                        )
+                    }
+                    path == "/api/auth/remember/refresh" -> {
+                        refreshCount.incrementAndGet()
+                        json("""{"token":"jwt-test","user":{"id":1,"email":"demo@essensys.fr"},"password_change_required":false}""")
+                    }
                     path == "/api/auth/password/change" -> { temporaryPassword = false; json("""{"message":"Mot de passe mis à jour."}""") }
                     path == "/api/auth/logout" -> MockResponse.Builder().code(200).build()
                     path == "/api/portal/link-request/status" -> json(

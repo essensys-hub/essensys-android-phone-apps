@@ -27,6 +27,12 @@ data class SessionState(
     val pinnedLanCertPem: String? = null,
     /** Non modifiable par l'utilisateur ; surchargé uniquement par les tests (serveur simulé). */
     val cloudHost: String = Hosts.CLOUD,
+    /** Session mémorisée de 30 jours (cloud) : échangée contre un jeton d'accès sans redemander le mot de passe. */
+    val rememberToken: String? = null,
+    /** Fin de la session mémorisée (epoch ms), telle que renvoyée par le serveur ; jamais prolongée par l'usage. */
+    val rememberExpiresAtMs: Long? = null,
+    /** La session mémorisée a pris fin côté serveur : l'écran de connexion l'explique. Non persisté. */
+    val sessionEnded: Boolean = false,
 ) {
     val baseUrl: String get() = if (mode == ConnectionMode.CLOUD) cloudHost else lanHost
     val isAuthenticated: Boolean get() = if (mode == ConnectionMode.CLOUD) token != null else lanCookie != null
@@ -36,8 +42,13 @@ interface SessionStore {
     val state: StateFlow<SessionState>
     suspend fun update(transform: (SessionState) -> SessionState)
 
-    /** Efface jeton, cookie et verrou ; garde les préférences (mode, hôte, thème, CA épinglée). */
-    suspend fun clearSession() = update { it.copy(token = null, lanCookie = null, passwordChangeRequired = false) }
+    /**
+     * Efface jeton, cookie, session mémorisée et verrou ; garde les préférences (mode, hôte, thème, CA épinglée)
+     * et l'indicateur [SessionState.sessionEnded], que seule une nouvelle connexion ou une déconnexion remet à zéro.
+     */
+    suspend fun clearSession() = update {
+        it.copy(token = null, lanCookie = null, passwordChangeRequired = false, rememberToken = null, rememberExpiresAtMs = null)
+    }
 }
 
 /** Implémentation mémoire : tests et previews. */

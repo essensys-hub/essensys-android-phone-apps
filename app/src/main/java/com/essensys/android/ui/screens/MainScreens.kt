@@ -172,11 +172,21 @@ fun SettingsScreen(vm: SessionViewModel, onSupport: () -> Unit = {}) {
                     )
                 }
             }
+            session.rememberExpiresAtMs?.takeIf { it > System.currentTimeMillis() }?.let {
+                Text(
+                    "Connecté jusqu'au ${formatRememberUntil(it)}",
+                    Modifier.testTag("remember-until"), style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted,
+                )
+            }
             ActionButton("Se déconnecter", { vm.logout() }, Modifier.fillMaxWidth().testTag("logout"), Tone.DANGER)
             Text("Version ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted)
         }
     }
 }
+
+/** Fin de la session mémorisée en heure locale : 1796860800000 → « 10/12/2026 ». */
+internal fun formatRememberUntil(expiresAtMs: Long, zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): String =
+    java.time.Instant.ofEpochMilli(expiresAtMs).atZone(zone).format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
 
 /** « 2026-10-25T08:00:00Z » → « 25/10/2026 08:00 » (heure locale) ; brut si illisible. */
 internal fun formatLastSeen(raw: String): String = runCatching {
