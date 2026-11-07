@@ -55,6 +55,16 @@ data class EffectiveLayout(val ordered: List<String>, val disabled: Set<String>)
         return items.filter { idOf(it) !in disabled }.sortedBy { rank[idOf(it)] ?: Int.MAX_VALUE }
     }
 
+    /** Vrai si l'ordre effectif diffère de l'ordre du catalogue d'origine (au moins un Monter/Descendre enregistré). */
+    fun isReordered(catalogue: List<String>) = ordered != catalogue
+
+    /**
+     * Écran sans groupe qui a son propre ordre (Temporisations) : tant que l'ordre des objets n'a pas été
+     * personnalisé, [items] garde son ordre propre (filtré des désactivés) ; sinon l'ordre global filtré s'applique.
+     */
+    fun <T> visibleKeepingOwnOrder(items: List<T>, catalogue: List<String>, idOf: (T) -> String): List<T> =
+        if (isReordered(catalogue)) visible(items, idOf) else items.filter { idOf(it) !in disabled }
+
     /** Échange [id] avec son voisin du même groupe ([delta] -1 monte, +1 descend) ; sans effet en tête ou en queue de groupe. */
     fun move(id: String, delta: Int, groupOf: (String) -> IndexTable.Group?): EffectiveLayout {
         val group = groupOf(id)

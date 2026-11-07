@@ -92,7 +92,24 @@ class ObjectLayoutTest {
     @Test
     fun timers_follow_the_global_order_and_skip_disabled_lights() {
         val e = ObjectLayouts.effective(LayoutKind.LIGHTS, layout(order = listOf("ann2", "dressing"), disabled = listOf("wc2")))
-        assertEquals(listOf("ann2", "dressing", "pieceserv", "ann1", "wc1"), e.visible(LightTimer.entries) { it.id }.map { it.id })
+        assertEquals(listOf("ann2", "dressing", "pieceserv", "ann1", "wc1"), e.visibleKeepingOwnOrder(LightTimer.entries, lightIds) { it.id }.map { it.id })
+    }
+
+    private fun timers(l: ObjectLayout) = ObjectLayouts.effective(LayoutKind.LIGHTS, l)
+        .visibleKeepingOwnOrder(LightTimer.entries, lightIds) { it.id }.map { it.id }
+    private val ownOrder = listOf("dressing", "wc1", "wc2", "pieceserv", "ann1", "ann2")
+
+    @Test
+    fun timers_keep_their_own_order_until_the_lights_are_reordered() {
+        assertEquals(ownOrder, timers(ObjectLayout.DEFAULT))
+        // Le client envoie un `order` complet : le catalogue complet en ordre d'origine n'est pas une personnalisation.
+        assertEquals(ownOrder, timers(layout(order = lightIds)))
+        assertEquals(ownOrder - "wc2", timers(layout(order = lightIds, disabled = listOf("wc2"))))
+        // Réordonnancement : ordre global filtré.
+        val reordered = layout(order = listOf("ann2", "dressing") + lightIds.filter { it != "ann2" && it != "dressing" })
+        assertEquals(listOf("ann2", "dressing", "pieceserv", "ann1", "wc1", "wc2"), timers(reordered))
+        // Reset : retour à l'ordre propre.
+        assertEquals(ownOrder, timers(ObjectLayout(version = 4)))
     }
 
     // --- ordre ---

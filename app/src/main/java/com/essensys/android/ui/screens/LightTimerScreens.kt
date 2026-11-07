@@ -56,7 +56,7 @@ fun LightTimersScreen(
             if (!commandsEnabled) {
                 Text("Armoire hors ligne : réglage indisponible.", Modifier.testTag("timers-offline"), color = Essensys.colors.textMuted)
             }
-            val timers = layout.visible(LightTimer.entries) { it.id }
+            val timers = layout.visibleKeepingOwnOrder(LightTimer.entries, LayoutKind.LIGHTS.catalogue()) { it.id }
             if (timers.isEmpty()) Text(ObjectLayouts.NO_LIGHT, Modifier.testTag("timers-empty"), color = Essensys.colors.textMuted)
             timers.forEach { timer ->
                 LightTimerControl(timer, vm, commandsEnabled, showName = true, displayName = names?.get(timer.id)?.display ?: timer.label)
