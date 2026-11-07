@@ -132,6 +132,36 @@ class FakeBackend(
                             else -> { shutterNames[id] = name.orEmpty(); json(shutterNameJson(id, name, status = "saved")) }
                         }
                     }
+                    // Disposition des lumières et des volets (affichage-objets-2026-11-006) : cloud et LAN, même contrat.
+                    (path == "/api/portal/lights/layout" || path == "/api/lights/layout" || path == "/api/portal/shutters/layout" || path == "/api/shutters/layout") &&
+                        request.method == "GET" -> {
+                        if (layoutAbsent) MockResponse.Builder().code(404).body("Not found").build() else json(layoutJson(path.contains("/lights/")))
+                    }
+                    LAYOUT_PUT.matches(path) && request.method == "PUT" -> {
+                        val lights = path.contains("/lights/")
+                        val body = request.body?.utf8().orEmpty()
+                        layoutPuts += "$path $body"
+                        val json = runCatching { org.json.JSONObject(body) }.getOrNull()
+                        val catalogue = if (lights) com.essensys.android.data.control.LayoutKind.LIGHTS.catalogue() else com.essensys.android.data.control.LayoutKind.SHUTTERS.catalogue()
+                        val order = json?.optJSONArray("order")?.let { a -> (0 until a.length()).map { a.getString(it) } }
+                        val disabled = json?.optJSONArray("disabled")?.let { a -> (0 until a.length()).map { a.getString(it) } }
+                        val reset = json?.optBoolean("reset") == true
+                        when {
+                            layoutForbidden -> MockResponse.Builder().code(403).body("""{"error":"forbidden"}""").build()
+                            layoutUnavailable -> MockResponse.Builder().code(503).body("""{"error":"names_unavailable"}""").build()
+                            !reset && (order == null || disabled == null) -> MockResponse.Builder().code(400).body("""{"error":"invalid_layout"}""").build()
+                            !reset && (order.orEmpty() + disabled.orEmpty()).any { it !in catalogue } ->
+                                MockResponse.Builder().code(400).body("""{"error":"${if (lights) "unknown_light" else "unknown_shutter"}"}""").build()
+                            dryRun(request) -> json(layoutDoc(order.orEmpty(), disabled.orEmpty(), 1, "dry_run"))
+                            else -> {
+                                val state = if (lights) lightLayout else shutterLayout
+                                state.order = if (reset) emptyList() else order.orEmpty()
+                                state.disabled = if (reset) emptyList() else disabled.orEmpty()
+                                state.version += 1
+                                json(layoutDoc(state.order, state.disabled, state.version, "saved"))
+                            }
+                        }
+                    }
                     path == "/api/admin/heating/sync" -> json(
                         """{"status":"started","sync":{"active":true,"startIndex":13,"byteCount":84,"received":0,"total":84,"chunksTotal":3,"chunksCompleted":0}}""",
                     )
@@ -183,6 +213,25 @@ class FakeBackend(
     }
 
     private fun namesJson() = lightNames.entries.joinToString(",", """{"lights":[""", "]}") { (id, name) -> nameJson(id, name.ifEmpty { null }) }
+
+    /** Dispositions servies par `{lights|shutters}/layout` (ordre, désactivés, version). */
+    class LayoutState(@Volatile var order: List<String> = emptyList(), @Volatile var disabled: List<String> = emptyList(), @Volatile var version: Int = 0)
+    val lightLayout = LayoutState()
+    val shutterLayout = LayoutState()
+    val layoutPuts = CopyOnWriteArrayList<String>()
+    /** Ancien serveur : la route de disposition répond 404. */
+    @Volatile var layoutAbsent = false
+    @Volatile var layoutForbidden = false
+    @Volatile var layoutUnavailable = false
+
+    private fun layoutDoc(order: List<String>, disabled: List<String>, version: Int, status: String? = null): String {
+        fun list(l: List<String>) = l.joinToString(",", "[", "]") { "\"$it\"" }
+        val at = if (version == 0) "null" else "\"2026-11-07T10:15:30.123Z\""
+        val st = status?.let { ""","status":"$it"""" }.orEmpty()
+        return """{"order":${list(order)},"disabled":${list(disabled)},"version":$version,"updated_at":$at$st}"""
+    }
+
+    private fun layoutJson(lights: Boolean) = (if (lights) lightLayout else shutterLayout).let { layoutDoc(it.order, it.disabled, it.version) }
 
     /** Noms personnalisés servis par `shutters/names` (id → nom ; "" = nom d'origine, servi `null`). Seuls les volets testés sont listés. */
     val shutterNames = java.util.concurrent.ConcurrentHashMap<String, String>(mapOf("volet1salon" to "", "volet2salon" to "", "voletstore" to "", "store" to ""))
@@ -236,6 +285,7 @@ class FakeBackend(
 
     private companion object {
         val SHUTTER_NAME_PUT = Regex("^/api/(portal/admin|admin)/shutters/names/[^/]+$")
+        val LAYOUT_PUT = Regex("^/api/(portal/admin|admin)/(lights|shutters)/layout$")
         val LIGHT_NAME_PUT = Regex("^/api/(portal/admin|admin)/lights/names/[^/]+$")
         val LIGHT_TIMER_PUT = Regex("^/api/(portal/admin|admin)/lights/timers/[^/]+$")
         val SCENARIOS = Regex("^/api/(portal/)?scenarios(/.*)?$")

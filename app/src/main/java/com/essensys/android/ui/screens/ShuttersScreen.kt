@@ -6,6 +6,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.essensys.android.data.control.LayoutKind
+import com.essensys.android.data.control.ObjectLayout
+import com.essensys.android.data.control.ObjectLayouts
 import com.essensys.android.data.control.ShutterNames
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -43,25 +46,45 @@ fun ShuttersScreen(
     namesVm: ShutterNamesViewModel? = null,
     /** Administrateur de l'armoire : champ « Nom » et « Nom d'origine » sous chaque volet. */
     canRename: Boolean = false,
+    /** Disposition (objets désactivés masqués, ordre choisi) ; null = catalogue complet dans l'ordre d'origine. */
+    layoutVm: ShutterLayoutViewModel? = null,
+    /** Administrateur de l'armoire : accès à l'écran de gestion de l'affichage. */
+    canManageLayout: Boolean = false,
 ) {
     val names = namesVm?.state?.collectAsStateWithLifecycle()?.value
+    val layoutState = layoutVm?.state?.collectAsStateWithLifecycle()?.value
+    val layout = ObjectLayouts.effective(LayoutKind.SHUTTERS, layoutState?.layout ?: ObjectLayout.DEFAULT)
+    // Volets actifs dans l'ordre global : « Temps de course » et lecture des temps (écrans sans groupe).
+    val active = layout.visible(IndexTable.shutters) { it.id }
     fun shown(shutter: IndexTable.Shutter) = names?.names?.get(shutter.id)?.display ?: shutter.name
     val inFlight by vm.inFlight.collectAsStateWithLifecycle()
     val feedback by vm.feedback.collectAsStateWithLifecycle()
     val times by vm.travelTimes.collectAsStateWithLifecycle()
-    LaunchedEffect(canReadTravelTimes) {
-        if (canReadTravelTimes) vm.loadTravelTimes(IndexTable.shutters.map { it.travelTimeIndex })
+    // On attend la fin de la lecture de la disposition pour ne lire que les temps des volets actifs.
+    val settled = layoutVm == null || layoutState?.settled == true
+    val activeKeys = active.map { it.travelTimeIndex }
+    LaunchedEffect(canReadTravelTimes, settled, activeKeys) {
+        if (canReadTravelTimes && settled && activeKeys.isNotEmpty()) vm.loadTravelTimes(activeKeys)
     }
     ScreenColumn {
         FeedbackBanner(feedback)
         FeedbackBanner(names?.feedback)
+        if (canManageLayout && layoutVm != null) {
+            LayoutManager(
+                LayoutKind.SHUTTERS, layoutVm,
+                listOf(IndexTable.Group.MAIN to "Volets", IndexTable.Group.SPECIAL to "Volet Store et Store banne"),
+                nameOf = { id -> names?.names?.get(id)?.display ?: IndexTable.shutters.first { it.id == id }.name },
+            )
+        }
         listOf(
             IndexTable.Group.MAIN to ("Volets" to "Volets roulants"),
             IndexTable.Group.SPECIAL to ("Volet Store et Store banne" to "Éléments spéciaux"),
         ).forEach { (group, titles) ->
-            val items = IndexTable.shutters.filter { it.group == group }
+            // Une seule liste, filtrée et ordonnée : le groupe et les lignes ne peuvent pas diverger.
+            val items = layout.visible(IndexTable.shutters.filter { it.group == group }) { it.id }
             EssensysCard(title = titles.first, description = titles.second) {
-                GroupActions(
+                if (items.isEmpty()) Text(ObjectLayouts.NO_SHUTTER, Modifier.testTag("group-$group-empty"), color = Essensys.colors.textMuted)
+                else GroupActions(
                     onAll = { open ->
                         vm.send("group-$group-$open", if (open) "Tout ouvrir" else "Tout fermer", items.map { it.command(open) })
                     },
@@ -88,7 +111,7 @@ fun ShuttersScreen(
                 }
             }
         }
-        TravelTimeCard(vm, inFlight, times, commandsEnabled && canReadTravelTimes, ::shown)
+        TravelTimeCard(vm, inFlight, times, commandsEnabled && canReadTravelTimes, active, ::shown)
     }
 }
 
@@ -99,11 +122,13 @@ private fun TravelTimeCard(
     inFlight: Set<String>,
     times: Map<Int, String>,
     enabled: Boolean,
+    /** Volets actifs, dans l'ordre global (les désactivés n'ont ni ligne ni réglage). */
+    shutters: List<IndexTable.Shutter>,
     nameOf: (IndexTable.Shutter) -> String,
 ) {
     val edited = remember { mutableStateMapOf<String, String>() }
     EssensysCard(title = "Temps de course", description = "Durée de commande du moteur, à l'ouverture et à la fermeture (1 à 255 secondes)") {
-        IndexTable.shutters.forEach { shutter ->
+        shutters.forEach { shutter ->
             val current = times[shutter.travelTimeIndex]
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column(Modifier.weight(1f)) {

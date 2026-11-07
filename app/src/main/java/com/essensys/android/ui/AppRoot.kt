@@ -70,6 +70,8 @@ import com.essensys.android.ui.screens.SettingsScreen
 import com.essensys.android.ui.screens.LightTimersScreen
 import com.essensys.android.ui.screens.LightTimersViewModel
 import com.essensys.android.ui.screens.LightNamesViewModel
+import com.essensys.android.ui.screens.LightLayoutViewModel
+import com.essensys.android.ui.screens.ShutterLayoutViewModel
 import com.essensys.android.ui.screens.ShuttersScreen
 import com.essensys.android.ui.screens.ShutterNamesViewModel
 import com.essensys.android.ui.screens.SupportScreen
@@ -93,6 +95,8 @@ fun EssensysRoot(container: AppContainer) {
     val scenariosVm: ScenariosViewModel = viewModel { ScenariosViewModel(container.scenarios) }
     val comfortVm: ComfortViewModel = viewModel { ComfortViewModel(container.comfort) }
     val namesVm: LightNamesViewModel = viewModel { LightNamesViewModel(container.comfort) }
+    val lightLayoutVm: LightLayoutViewModel = viewModel { LightLayoutViewModel(container.comfort) }
+    val shutterLayoutVm: ShutterLayoutViewModel = viewModel { ShutterLayoutViewModel(container.comfort) }
     // Les temporisations affichent le nom personnalisé de la lumière (spec light-names-clients), pas le libellé d'origine.
     val timersVm: LightTimersViewModel = viewModel { LightTimersViewModel(container.comfort, nameOf = { namesVm.displayName(it.id, it.label) }) }
     val session by sessionVm.session.collectAsStateWithLifecycle()
@@ -119,7 +123,7 @@ fun EssensysRoot(container: AppContainer) {
                     LaunchedEffect(session.mode, session.isAuthenticated) { sessionVm.refreshLink() }
                     when (val l = link) {
                         null -> Column(insets) { ScreenColumn { Text("Chargement…", color = Essensys.colors.textMuted) } }
-                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, timersVm, namesVm, shutterNamesVm, supportVm, sendSupport)
+                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, timersVm, namesVm, shutterNamesVm, lightLayoutVm, shutterLayoutVm, supportVm, sendSupport)
                         else -> Column(insets) { LinkScreen(sessionVm, l) }
                     }
                 }
@@ -138,6 +142,8 @@ private fun MainScaffold(
     timersVm: LightTimersViewModel,
     namesVm: LightNamesViewModel,
     shutterNamesVm: ShutterNamesViewModel,
+    lightLayoutVm: LightLayoutViewModel,
+    shutterLayoutVm: ShutterLayoutViewModel,
     supportVm: SupportViewModel,
     sendSupport: (SupportPackage) -> Unit,
 ) {
@@ -146,7 +152,7 @@ private fun MainScaffold(
     BackHandler(enabled = feature != null) { feature = null }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     // Noms des lumières : relus à chaque connexion et à chaque changement de mode (cloud ou réseau local).
-    LaunchedEffect(session.mode, session.token, session.baseUrl) { namesVm.load(); shutterNamesVm.load() }
+    LaunchedEffect(session.mode, session.token, session.baseUrl) { namesVm.load(); shutterNamesVm.load(); lightLayoutVm.load(); shutterLayoutVm.load() }
     val online by sessionVm.gatewayOnline.collectAsStateWithLifecycle()
     val lastAction by sessionVm.lastAction.collectAsStateWithLifecycle()
 
@@ -226,15 +232,15 @@ private fun MainScaffold(
                 Feature.SPRINKLER -> SprinklerScreen(comfortVm, commandsEnabled)
                 Feature.SECURITY_OUTLETS -> SecurityOutletsScreen(comfortVm, commandsEnabled)
                 // Réservé à l'administrateur : le serveur refuse les autres, l'écran n'est qu'un masquage.
-                Feature.LIGHT_TIMERS -> if (session.isAdmin) LightTimersScreen(timersVm, commandsEnabled, namesVm) else ScreenColumn {
+                Feature.LIGHT_TIMERS -> if (session.isAdmin) LightTimersScreen(timersVm, commandsEnabled, namesVm, lightLayoutVm) else ScreenColumn {
                     Text("Réservé à l'administrateur de l'armoire.", Modifier.testTag("timers-forbidden"), color = Essensys.colors.textMuted)
                 }
                 Feature.ALARM -> AlarmScreen(comfortVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
                 Feature.SUPPORT -> SupportScreen(supportVm, sendSupport)
             } else when (destination) {
                 Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it }, scenariosVm, commandsEnabled, isAdmin = session.isAdmin)
-                Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled, timersVm = timersVm.takeIf { session.isAdmin }, namesVm = namesVm, canRename = session.isAdmin)
-                Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true, namesVm = shutterNamesVm, canRename = session.isAdmin)
+                Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled, timersVm = timersVm.takeIf { session.isAdmin }, namesVm = namesVm, canRename = session.isAdmin, layoutVm = lightLayoutVm, canManageLayout = session.isAdmin)
+                Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true, namesVm = shutterNamesVm, canRename = session.isAdmin, layoutVm = shutterLayoutVm, canManageLayout = session.isAdmin)
                 Destination.HEATING -> HeatingScreen(heatingVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
                 Destination.SETTINGS -> SettingsScreen(sessionVm, onSupport = { feature = Feature.SUPPORT })
             }

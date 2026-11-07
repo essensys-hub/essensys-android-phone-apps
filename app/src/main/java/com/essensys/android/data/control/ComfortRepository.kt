@@ -8,6 +8,7 @@ import com.essensys.android.data.http.ApiResult
 import com.essensys.android.data.http.EssensysJson
 import com.essensys.android.data.http.InjectResponse
 import com.essensys.android.data.http.LightNameDto
+import com.essensys.android.data.http.ObjectLayoutDto
 import com.essensys.android.data.http.LightNamesResponse
 import com.essensys.android.data.http.LightTimerRequest
 import com.essensys.android.data.http.LightTimersResponse
@@ -15,6 +16,7 @@ import com.essensys.android.data.http.ShutterNameDto
 import com.essensys.android.data.http.ShutterNamesResponse
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.SessionStore
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -152,6 +154,55 @@ class ComfortRepository(
     }
 
     /**
+     * Disposition d'un genre d'objets (spec object-layout-clients) : cloud `GET /api/portal/{lights|shutters}/layout`,
+     * LAN `GET /api/{lights|shutters}/layout`. Un échec (dont 404 d'un ancien serveur) laisse l'appelant au catalogue
+     * complet dans l'ordre d'origine, ou à la dernière disposition lue.
+     */
+    suspend fun readObjectLayout(kind: LayoutKind): ApiResult<ObjectLayout> {
+        val state = store.state.value
+        val path = (if (state.mode == ConnectionMode.CLOUD) "/api/portal" else "/api") + "/${kind.path}/layout"
+        return when (val result = api.get(state.baseUrl, path)) {
+            is ApiResult.Err -> result.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val dto = runCatching { EssensysJson.decodeFromString(ObjectLayoutDto.serializer(), result.value.body) }
+                    .getOrElse { return ApiResult.Err(ApiError.Http(result.value.status, null, null)) }
+                ApiResult.Ok(dto.toLayout())
+            }
+        }
+    }
+
+    suspend fun readLightLayout() = readObjectLayout(LayoutKind.LIGHTS)
+
+    suspend fun readShutterLayout() = readObjectLayout(LayoutKind.SHUTTERS)
+
+    /**
+     * Enregistre la disposition (administrateur) : cloud `PUT /api/portal/admin/{lights|shutters}/layout`, LAN
+     * `PUT /api/admin/{lights|shutters}/layout`. Corps `{"order":[…],"disabled":[…]}` (un seul appel, `order`
+     * complet) ou `{"reset":true}`. Validée avant l'envoi. Aucun ordre n'est envoyé à l'armoire.
+     */
+    suspend fun writeObjectLayout(kind: LayoutKind, order: List<String>, disabled: List<String>, reset: Boolean = false): ApiResult<ObjectLayoutSaved> {
+        if (!reset) ObjectLayouts.validate(kind, order, disabled).onFailure { error ->
+            val code = (error as? ObjectLayouts.LayoutException)?.code
+            return ApiResult.Err(ApiError.Http(400, code, null))
+        }
+        val state = store.state.value
+        val prefix = if (state.mode == ConnectionMode.CLOUD) "/api/portal/admin" else "/api/admin"
+        val body = buildJsonObject {
+            if (reset) put("reset", JsonPrimitive(true)) else {
+                put("order", JsonArray(order.map(::JsonPrimitive)))
+                put("disabled", JsonArray(disabled.map(::JsonPrimitive)))
+            }
+        }
+        return when (val result = api.send(state.baseUrl, "PUT", "$prefix/${kind.path}/layout", body)) {
+            is ApiResult.Err -> result.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val dto = runCatching { EssensysJson.decodeFromString(ObjectLayoutDto.serializer(), result.value.body) }.getOrNull()
+                ApiResult.Ok(ObjectLayoutSaved(dto?.toLayout(), dryRun = dto?.status == "dry_run"))
+            }
+        }
+    }
+
+    /**
      * Temporisations des six lumières (spec light-timers-clients) : cloud `GET /api/portal/lights/timers`, LAN
      * `GET /api/admin/lights/timers`. Une valeur jamais lue (`null`) ou hors 0..255 reste inconnue, jamais 0.
      */
@@ -224,3 +275,5 @@ private fun LightNameDto.toLightName(original: LightName) =
 
 private fun ShutterNameDto.toShutterName(original: ShutterName) =
     ShutterName(id, defaultName?.takeIf { it.isNotBlank() } ?: original.defaultName, name, version, updatedAt)
+
+private fun ObjectLayoutDto.toLayout() = ObjectLayout(order, disabled, version, updatedAt)
