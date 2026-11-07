@@ -18,7 +18,11 @@ import kotlinx.coroutines.launch
  * Envoi des commandes avec anti-rebond (spec domotic-controls « Retour et anti-rebond ») :
  * une seule commande en vol par cible ; les autres appuis sur la même cible sont ignorés.
  */
-class ControlViewModel(private val control: ControlRepository) : ViewModel() {
+class ControlViewModel(
+    private val control: ControlRepository,
+    /** Nom affiché d'un volet (nom personnalisé, sinon d'origine) pour les messages du temps de course. */
+    private val nameOf: (IndexTable.Shutter) -> String = { it.name },
+) : ViewModel() {
 
     private val _inFlight = MutableStateFlow<Set<String>>(emptySet())
     val inFlight: StateFlow<Set<String>> = _inFlight.asStateFlow()
@@ -55,9 +59,10 @@ class ControlViewModel(private val control: ControlRepository) : ViewModel() {
      * @return false si la saisie est refusée ou la commande déjà en vol.
      */
     fun saveTravelTime(shutter: IndexTable.Shutter, raw: String): Boolean {
+        val label = nameOf(shutter)
         val command = raw.trim().toIntOrNull()?.let(shutter::travelTimeCommand)
         if (command == null) {
-            _feedback.value = Feedback("${shutter.name} : entre 1 et 255 secondes", Feedback.Kind.ERROR)
+            _feedback.value = Feedback("$label : entre 1 et 255 secondes", Feedback.Kind.ERROR)
             return false
         }
         val key = "time-${shutter.id}"
@@ -71,10 +76,10 @@ class ControlViewModel(private val control: ControlRepository) : ViewModel() {
                 is ApiResult.Ok -> {
                     _travelTimes.update { it + (command.k to command.v) }
                     if (result.value == InjectOutcome.DRY_RUN_OK) {
-                        Feedback("${shutter.name} : temps de course validé (test, non exécuté)", Feedback.Kind.INFO)
-                    } else Feedback("${shutter.name} : temps de course réglé à ${command.v} s", Feedback.Kind.SUCCESS)
+                        Feedback("$label : temps de course validé (test, non exécuté)", Feedback.Kind.INFO)
+                    } else Feedback("$label : temps de course réglé à ${command.v} s", Feedback.Kind.SUCCESS)
                 }
-                is ApiResult.Err -> Feedback("${shutter.name} : ${result.error.userMessage}", Feedback.Kind.ERROR)
+                is ApiResult.Err -> Feedback("$label : ${result.error.userMessage}", Feedback.Kind.ERROR)
             }
             _inFlight.update { it - key }
         }

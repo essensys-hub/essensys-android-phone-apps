@@ -71,6 +71,7 @@ import com.essensys.android.ui.screens.LightTimersScreen
 import com.essensys.android.ui.screens.LightTimersViewModel
 import com.essensys.android.ui.screens.LightNamesViewModel
 import com.essensys.android.ui.screens.ShuttersScreen
+import com.essensys.android.ui.screens.ShutterNamesViewModel
 import com.essensys.android.ui.screens.SupportScreen
 import com.essensys.android.ui.screens.SupportViewModel
 import com.essensys.android.data.support.SupportPackage
@@ -85,7 +86,9 @@ fun EssensysRoot(container: AppContainer) {
     val supportVm: SupportViewModel = viewModel { SupportViewModel(container.supportDiagnostics, container.supportBundle, container.appLog) }
     val context = LocalContext.current
     val sendSupport: (SupportPackage) -> Unit = { container.mailer(context, it) }
-    val controlVm: ControlViewModel = viewModel { ControlViewModel(container.control) }
+    val shutterNamesVm: ShutterNamesViewModel = viewModel { ShutterNamesViewModel(container.comfort) }
+    // Le temps de course cite le nom affiché du volet (spec shutter-names-clients), pas le libellé d'origine.
+    val controlVm: ControlViewModel = viewModel { ControlViewModel(container.control, nameOf = { shutterNamesVm.displayName(it.id, it.name) }) }
     val heatingVm: HeatingViewModel = viewModel { HeatingViewModel(container.heating) }
     val scenariosVm: ScenariosViewModel = viewModel { ScenariosViewModel(container.scenarios) }
     val comfortVm: ComfortViewModel = viewModel { ComfortViewModel(container.comfort) }
@@ -116,7 +119,7 @@ fun EssensysRoot(container: AppContainer) {
                     LaunchedEffect(session.mode, session.isAuthenticated) { sessionVm.refreshLink() }
                     when (val l = link) {
                         null -> Column(insets) { ScreenColumn { Text("Chargement…", color = Essensys.colors.textMuted) } }
-                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, timersVm, namesVm, supportVm, sendSupport)
+                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, timersVm, namesVm, shutterNamesVm, supportVm, sendSupport)
                         else -> Column(insets) { LinkScreen(sessionVm, l) }
                     }
                 }
@@ -134,6 +137,7 @@ private fun MainScaffold(
     comfortVm: ComfortViewModel,
     timersVm: LightTimersViewModel,
     namesVm: LightNamesViewModel,
+    shutterNamesVm: ShutterNamesViewModel,
     supportVm: SupportViewModel,
     sendSupport: (SupportPackage) -> Unit,
 ) {
@@ -142,7 +146,7 @@ private fun MainScaffold(
     BackHandler(enabled = feature != null) { feature = null }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     // Noms des lumières : relus à chaque connexion et à chaque changement de mode (cloud ou réseau local).
-    LaunchedEffect(session.mode, session.token, session.baseUrl) { namesVm.load() }
+    LaunchedEffect(session.mode, session.token, session.baseUrl) { namesVm.load(); shutterNamesVm.load() }
     val online by sessionVm.gatewayOnline.collectAsStateWithLifecycle()
     val lastAction by sessionVm.lastAction.collectAsStateWithLifecycle()
 
@@ -230,7 +234,7 @@ private fun MainScaffold(
             } else when (destination) {
                 Destination.HOME -> HomeScreen(onOpen = { destination = it }, onOpenFeature = { feature = it }, scenariosVm, commandsEnabled, isAdmin = session.isAdmin)
                 Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled, timersVm = timersVm.takeIf { session.isAdmin }, namesVm = namesVm, canRename = session.isAdmin)
-                Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true)
+                Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true, namesVm = shutterNamesVm, canRename = session.isAdmin)
                 Destination.HEATING -> HeatingScreen(heatingVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
                 Destination.SETTINGS -> SettingsScreen(sessionVm, onSupport = { feature = Feature.SUPPORT })
             }
