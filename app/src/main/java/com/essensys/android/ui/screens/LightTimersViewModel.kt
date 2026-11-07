@@ -32,6 +32,8 @@ data class LightTimersUiState(
 class LightTimersViewModel(
     private val comfort: ComfortRepository,
     private val recheckMs: List<Long> = RECHECK_MS,
+    /** Nom affiché de la lumière (nom personnalisé, sinon d'origine) pour les confirmations. */
+    private val nameOf: (LightTimer) -> String = { it.label },
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(LightTimersUiState())
@@ -48,7 +50,7 @@ class LightTimersViewModel(
         if (!accepted) return
         viewModelScope.launch {
             val result = comfort.setLightTimer(timer, minutes)
-            val label = "${timer.label} : ${LightTimer.describe(minutes)}"
+            val label = "${nameOf(timer)} : ${LightTimer.describe(minutes)}"
             _state.update {
                 it.copy(
                     sending = it.sending - timer,
@@ -57,7 +59,7 @@ class LightTimersViewModel(
                             InjectOutcome.DRY_RUN_OK -> Feedback("$label — commande validée (test, non exécutée)", Feedback.Kind.INFO)
                             InjectOutcome.SENT -> Feedback("$label — commande envoyée, l'armoire exécute sous ~5 s", Feedback.Kind.SUCCESS)
                         }
-                        is ApiResult.Err -> Feedback("${timer.label} : ${result.error.userMessage}", Feedback.Kind.ERROR)
+                        is ApiResult.Err -> Feedback("${nameOf(timer)} : ${result.error.userMessage}", Feedback.Kind.ERROR)
                     },
                 )
             }

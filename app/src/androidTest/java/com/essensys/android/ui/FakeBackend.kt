@@ -94,6 +94,25 @@ class FakeBackend(
                             else -> { lightTimers[id] = minutes; json("""{"id":"$id","minutes":$minutes,"status":"queued"}""") }
                         }
                     }
+                    // Noms des lumières (noms-lumieres-2026-11-004) : cloud et LAN, même contrat.
+                    (path == "/api/portal/lights/names" || path == "/api/lights/names") && request.method == "GET" -> {
+                        if (namesUnavailable) MockResponse.Builder().code(503).body("""{"error":"names_unavailable"}""").build() else json(namesJson())
+                    }
+                    LIGHT_NAME_PUT.matches(path) && request.method == "PUT" -> {
+                        val id = path.substringAfterLast('/')
+                        val body = request.body?.utf8().orEmpty()
+                        namePuts += "$path $body"
+                        val raw = Regex("\"name\":(null|\"(.*)\")").find(body)
+                        val name = raw?.groupValues?.get(2)?.takeIf { raw.groupValues[1] != "null" }
+                        when {
+                            nameForbidden -> MockResponse.Builder().code(403).body("""{"error":"forbidden"}""").build()
+                            !lightNames.containsKey(id) -> MockResponse.Builder().code(400).body("""{"error":"unknown_light"}""").build()
+                            raw == null || (name != null && (name.isBlank() || name.codePointCount(0, name.length) > 40)) ->
+                                MockResponse.Builder().code(400).body("""{"error":"invalid_name"}""").build()
+                            dryRun(request) -> json(nameJson(id, name, status = "dry_run"))
+                            else -> { lightNames[id] = name.orEmpty(); json(nameJson(id, name, status = "saved")) }
+                        }
+                    }
                     path == "/api/admin/heating/sync" -> json(
                         """{"status":"started","sync":{"active":true,"startIndex":13,"byteCount":84,"received":0,"total":84,"chunksTotal":3,"chunksCompleted":0}}""",
                     )
@@ -129,6 +148,22 @@ class FakeBackend(
         "dressing" to ("Dressing" to 521), "wc1" to ("WC 1" to 555), "wc2" to ("WC 2" to 556),
         "pieceserv" to ("Service" to 557), "ann1" to ("Annexe 1" to 561), "ann2" to ("Annexe 2" to 562),
     )
+
+    /** Noms personnalisés servis par `lights/names` (id → nom ; "" = nom d'origine, servi `null`). Seules les lumières testées sont listées. */
+    val lightNames = java.util.concurrent.ConcurrentHashMap<String, String>(mapOf("dressing" to "", "wc1" to "", "salon" to ""))
+    val namePuts = CopyOnWriteArrayList<String>()
+    @Volatile var namesUnavailable = false
+    @Volatile var nameForbidden = false
+    private val nameDefaults = mapOf("dressing" to "Dressing", "wc1" to "WC 1", "salon" to "Salon")
+
+    private fun nameJson(id: String, name: String?, status: String? = null): String {
+        val version = if (name == null) 0 else 1
+        val at = if (name == null) "null" else "\"2026-11-07T10:15:30.123Z\""
+        val st = status?.let { ""","status":"$it"""" }.orEmpty()
+        return """{"id":"$id","default":"${nameDefaults.getValue(id)}","name":${name?.let { "\"$it\"" } ?: "null"},"version":$version,"updated_at":$at$st}"""
+    }
+
+    private fun namesJson() = lightNames.entries.joinToString(",", """{"lights":[""", "]}") { (id, name) -> nameJson(id, name.ifEmpty { null }) }
 
     private fun timersJson() = timerLabels.entries.joinToString(",", """{"timers":[""", "]}") { (id, lk) ->
         """{"id":"$id","label":"${lk.first}","key":${lk.second},"minutes":${lightTimers[id]?.takeIf { it >= 0 } ?: "null"}}"""
@@ -167,6 +202,7 @@ class FakeBackend(
         requireNotNull(javaClass.classLoader?.getResource("fixtures/$name")) { "fixture $name" }.readText()
 
     private companion object {
+        val LIGHT_NAME_PUT = Regex("^/api/(portal/admin|admin)/lights/names/[^/]+$")
         val LIGHT_TIMER_PUT = Regex("^/api/(portal/admin|admin)/lights/timers/[^/]+$")
         val SCENARIOS = Regex("^/api/(portal/)?scenarios(/.*)?$")
     }

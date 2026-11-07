@@ -33,7 +33,8 @@ import com.essensys.android.ui.theme.Essensys
  * Réservé aux administrateurs : l'appelant ne l'ouvre pas pour les autres (le serveur refuse de toute façon).
  */
 @Composable
-fun LightTimersScreen(vm: LightTimersViewModel, commandsEnabled: Boolean) {
+fun LightTimersScreen(vm: LightTimersViewModel, commandsEnabled: Boolean, namesVm: LightNamesViewModel? = null) {
+    val names = namesVm?.state?.collectAsStateWithLifecycle()?.value?.names
     val state by vm.state.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { vm.load() }
     ScreenColumn {
@@ -46,7 +47,7 @@ fun LightTimersScreen(vm: LightTimersViewModel, commandsEnabled: Boolean) {
                 Text("Armoire hors ligne : réglage indisponible.", Modifier.testTag("timers-offline"), color = Essensys.colors.textMuted)
             }
             LightTimer.entries.forEach { timer ->
-                LightTimerControl(timer, vm, commandsEnabled, showName = true)
+                LightTimerControl(timer, vm, commandsEnabled, showName = true, displayName = names?.get(timer.id)?.display ?: timer.label)
             }
         }
     }
@@ -57,7 +58,14 @@ fun LightTimersScreen(vm: LightTimersViewModel, commandsEnabled: Boolean) {
  * Même composant dans le menu central et dans l'écran Éclairage. Une saisie hors plage est refusée ici, sans requête.
  */
 @Composable
-fun LightTimerControl(timer: LightTimer, vm: LightTimersViewModel, commandsEnabled: Boolean, showName: Boolean = false) {
+fun LightTimerControl(
+    timer: LightTimer,
+    vm: LightTimersViewModel,
+    commandsEnabled: Boolean,
+    showName: Boolean = false,
+    /** Nom affiché de la lumière (nom personnalisé, sinon d'origine). */
+    displayName: String = timer.label,
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     val minutes = state.minutes[timer]
     val busy = timer in state.sending
@@ -68,7 +76,7 @@ fun LightTimerControl(timer: LightTimer, vm: LightTimersViewModel, commandsEnabl
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (showName) Text(timer.label, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = Essensys.colors.text)
+            if (showName) Text(displayName, Modifier.weight(1f).testTag("$tag-name"), style = MaterialTheme.typography.bodyMedium, color = Essensys.colors.text)
             else Text("Extinction automatique", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = Essensys.colors.text)
             StatusPill(
                 if (waiting) "En attente de l'armoire" else LightTimer.describe(minutes),
@@ -102,7 +110,7 @@ fun LightTimerControl(timer: LightTimer, vm: LightTimersViewModel, commandsEnabl
             ActionButton(
                 "Envoyer", {
                     val value = LightTimer.parseFree(free)
-                    if (value == null) error = "${timer.label} : entre 1 et 255 minutes (Jamais pour désactiver)"
+                    if (value == null) error = "$displayName : entre 1 et 255 minutes (Jamais pour désactiver)"
                     else { error = null; vm.set(timer, value) }
                 },
                 Modifier.testTag("$tag-send"), Tone.PRIMARY, loading = busy, enabled = commandsEnabled && !busy, compact = true,
