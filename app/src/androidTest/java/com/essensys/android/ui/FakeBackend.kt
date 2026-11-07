@@ -113,6 +113,25 @@ class FakeBackend(
                             else -> { lightNames[id] = name.orEmpty(); json(nameJson(id, name, status = "saved")) }
                         }
                     }
+                    // Noms des volets (noms-volets-2026-11-005) : cloud et LAN, même contrat que les lumières.
+                    (path == "/api/portal/shutters/names" || path == "/api/shutters/names") && request.method == "GET" -> {
+                        if (namesUnavailable) MockResponse.Builder().code(503).body("""{"error":"names_unavailable"}""").build() else json(shutterNamesJson())
+                    }
+                    SHUTTER_NAME_PUT.matches(path) && request.method == "PUT" -> {
+                        val id = path.substringAfterLast('/')
+                        val body = request.body?.utf8().orEmpty()
+                        shutterNamePuts += "$path $body"
+                        val raw = Regex("\"name\":(null|\"(.*)\")").find(body)
+                        val name = raw?.groupValues?.get(2)?.takeIf { raw.groupValues[1] != "null" }
+                        when {
+                            nameForbidden -> MockResponse.Builder().code(403).body("""{"error":"forbidden"}""").build()
+                            !shutterNames.containsKey(id) -> MockResponse.Builder().code(400).body("""{"error":"unknown_shutter"}""").build()
+                            raw == null || (name != null && (name.isBlank() || name.codePointCount(0, name.length) > 40)) ->
+                                MockResponse.Builder().code(400).body("""{"error":"invalid_name"}""").build()
+                            dryRun(request) -> json(shutterNameJson(id, name, status = "dry_run"))
+                            else -> { shutterNames[id] = name.orEmpty(); json(shutterNameJson(id, name, status = "saved")) }
+                        }
+                    }
                     path == "/api/admin/heating/sync" -> json(
                         """{"status":"started","sync":{"active":true,"startIndex":13,"byteCount":84,"received":0,"total":84,"chunksTotal":3,"chunksCompleted":0}}""",
                     )
@@ -165,6 +184,20 @@ class FakeBackend(
 
     private fun namesJson() = lightNames.entries.joinToString(",", """{"lights":[""", "]}") { (id, name) -> nameJson(id, name.ifEmpty { null }) }
 
+    /** Noms personnalisés servis par `shutters/names` (id → nom ; "" = nom d'origine, servi `null`). Seuls les volets testés sont listés. */
+    val shutterNames = java.util.concurrent.ConcurrentHashMap<String, String>(mapOf("volet1salon" to "", "volet2salon" to "", "voletstore" to "", "store" to ""))
+    val shutterNamePuts = CopyOnWriteArrayList<String>()
+    private val shutterDefaults = mapOf("volet1salon" to "Volet 1 Salon", "volet2salon" to "Volet 2 Salon", "voletstore" to "Volet \\\"Store\\\"", "store" to "Store (banne)")
+
+    private fun shutterNameJson(id: String, name: String?, status: String? = null): String {
+        val version = if (name == null) 0 else 1
+        val at = if (name == null) "null" else "\"2026-11-07T10:15:30.123Z\""
+        val st = status?.let { """,\"status\":\"$it\"""" }.orEmpty()
+        return """{"id":"$id","default":"${shutterDefaults.getValue(id)}","name":${name?.let { "\"$it\"" } ?: "null"},"version":$version,"updated_at":$at$st}"""
+    }
+
+    private fun shutterNamesJson() = shutterNames.entries.joinToString(",", """{"shutters":[""", "]}") { (id, name) -> shutterNameJson(id, name.ifEmpty { null }) }
+
     private fun timersJson() = timerLabels.entries.joinToString(",", """{"timers":[""", "]}") { (id, lk) ->
         """{"id":"$id","label":"${lk.first}","key":${lk.second},"minutes":${lightTimers[id]?.takeIf { it >= 0 } ?: "null"}}"""
     }
@@ -202,6 +235,7 @@ class FakeBackend(
         requireNotNull(javaClass.classLoader?.getResource("fixtures/$name")) { "fixture $name" }.readText()
 
     private companion object {
+        val SHUTTER_NAME_PUT = Regex("^/api/(portal/admin|admin)/shutters/names/[^/]+$")
         val LIGHT_NAME_PUT = Regex("^/api/(portal/admin|admin)/lights/names/[^/]+$")
         val LIGHT_TIMER_PUT = Regex("^/api/(portal/admin|admin)/lights/timers/[^/]+$")
         val SCENARIOS = Regex("^/api/(portal/)?scenarios(/.*)?$")

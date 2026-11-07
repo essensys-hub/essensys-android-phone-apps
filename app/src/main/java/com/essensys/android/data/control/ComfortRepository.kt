@@ -11,6 +11,8 @@ import com.essensys.android.data.http.LightNameDto
 import com.essensys.android.data.http.LightNamesResponse
 import com.essensys.android.data.http.LightTimerRequest
 import com.essensys.android.data.http.LightTimersResponse
+import com.essensys.android.data.http.ShutterNameDto
+import com.essensys.android.data.http.ShutterNamesResponse
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.SessionStore
 import kotlinx.serialization.json.JsonNull
@@ -108,6 +110,48 @@ class ComfortRepository(
     }
 
     /**
+     * Noms des volets et stores (spec shutter-names-clients) : cloud `GET /api/portal/shutters/names`, LAN
+     * `GET /api/shutters/names`. Le résultat couvre toujours les 16 volets : un volet absent de la réponse garde son
+     * nom d'origine, un identifiant inconnu est ignoré. En cas d'échec, l'appelant garde [ShutterNames.fallback].
+     */
+    suspend fun readShutterNames(): ApiResult<Map<String, ShutterName>> {
+        val state = store.state.value
+        val path = if (state.mode == ConnectionMode.CLOUD) "/api/portal/shutters/names" else "/api/shutters/names"
+        return when (val result = api.get(state.baseUrl, path)) {
+            is ApiResult.Err -> result.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val response = runCatching { EssensysJson.decodeFromString(ShutterNamesResponse.serializer(), result.value.body) }
+                    .getOrElse { return ApiResult.Err(ApiError.Http(result.value.status, null, null)) }
+                val byId = response.shutters.associateBy { it.id }
+                ApiResult.Ok(ShutterNames.fallback().mapValues { (id, original) -> byId[id]?.toShutterName(original) ?: original })
+            }
+        }
+    }
+
+    /**
+     * Renomme un volet ou un store (administrateur) : cloud `PUT /api/portal/admin/shutters/names/{id}`, LAN
+     * `PUT /api/admin/shutters/names/{id}`, corps `{"name":"…"}` ; [name] nul = retour au nom d'origine
+     * (`{"name":null}`). Le nom est validé avant l'envoi. Aucun ordre n'est envoyé à l'armoire.
+     */
+    suspend fun setShutterName(id: String, name: String?): ApiResult<ShutterNameSaved> {
+        val clean = if (name == null) null else ShutterNames.validate(name).getOrElse {
+            return ApiResult.Err(ApiError.Http(400, "invalid_name", ShutterNames.INVALID))
+        }
+        val state = store.state.value
+        val prefix = if (state.mode == ConnectionMode.CLOUD) "/api/portal/admin" else "/api/admin"
+        // explicitNulls = false retirerait `"name":null` : le corps est construit à la main.
+        val body = buildJsonObject { put("name", clean?.let(::JsonPrimitive) ?: JsonNull) }
+        return when (val result = api.send(state.baseUrl, "PUT", "$prefix/shutters/names/$id", body)) {
+            is ApiResult.Err -> result.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val dto = runCatching { EssensysJson.decodeFromString(ShutterNameDto.serializer(), result.value.body) }.getOrNull()
+                val original = ShutterNames.fallback()[id]
+                ApiResult.Ok(ShutterNameSaved(original?.let { dto?.toShutterName(it) }, dryRun = dto?.status == "dry_run"))
+            }
+        }
+    }
+
+    /**
      * Temporisations des six lumières (spec light-timers-clients) : cloud `GET /api/portal/lights/timers`, LAN
      * `GET /api/admin/lights/timers`. Une valeur jamais lue (`null`) ou hors 0..255 reste inconnue, jamais 0.
      */
@@ -177,3 +221,6 @@ class ComfortRepository(
 
 private fun LightNameDto.toLightName(original: LightName) =
     LightName(id, defaultName?.takeIf { it.isNotBlank() } ?: original.defaultName, name, version, updatedAt)
+
+private fun ShutterNameDto.toShutterName(original: ShutterName) =
+    ShutterName(id, defaultName?.takeIf { it.isNotBlank() } ?: original.defaultName, name, version, updatedAt)

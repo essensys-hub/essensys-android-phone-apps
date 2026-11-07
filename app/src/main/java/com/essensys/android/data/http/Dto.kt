@@ -93,6 +93,18 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class LightNamesResponse(val lights: List<LightNameDto> = emptyList())
 
+// Noms personnalisés des volets et stores (change noms-volets-2026-11-005, mêmes champs que les lumières).
+@Serializable data class ShutterNameDto(
+    val id: String,
+    @SerialName("default") val defaultName: String? = null,
+    val name: String? = null,
+    val version: Int = 0,
+    @SerialName("updated_at") val updatedAt: String? = null,
+    val status: String? = null,
+)
+
+@Serializable data class ShutterNamesResponse(val shutters: List<ShutterNameDto> = emptyList())
+
 @Serializable data class InjectBatchRequest(val params: List<KeyValue>)
 
 // Synchronisation du planning de chauffage, LAN seulement (essensys-server-backend handlers.go).
