@@ -7,6 +7,8 @@ import com.essensys.android.data.http.ApiError
 import com.essensys.android.data.http.ApiResult
 import com.essensys.android.data.http.EssensysJson
 import com.essensys.android.data.http.InjectResponse
+import com.essensys.android.data.http.LightTimerRequest
+import com.essensys.android.data.http.LightTimersResponse
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.SessionStore
 import kotlinx.serialization.json.encodeToJsonElement
@@ -57,6 +59,43 @@ class ComfortRepository(
 
     /** Coupure ou rétablissement : un lot `[590 = 1, 623 = 1|2]`, en cloud comme en LAN. */
     suspend fun securityOutlets(action: IndexTable.SecurityOutletsAction) = control.injectBatch(action.commands())
+
+    /**
+     * Temporisations des six lumières (spec light-timers-clients) : cloud `GET /api/portal/lights/timers`, LAN
+     * `GET /api/admin/lights/timers`. Une valeur jamais lue (`null`) ou hors 0..255 reste inconnue, jamais 0.
+     */
+    suspend fun readLightTimers(): ApiResult<Map<LightTimer, Int?>> {
+        val state = store.state.value
+        val prefix = if (state.mode == ConnectionMode.CLOUD) "/api/portal" else "/api/admin"
+        return when (val result = api.get(state.baseUrl, "$prefix/lights/timers")) {
+            is ApiResult.Err -> result.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val response = runCatching { EssensysJson.decodeFromString(LightTimersResponse.serializer(), result.value.body) }
+                    .getOrElse { return ApiResult.Err(ApiError.Http(result.value.status, null, null)) }
+                val byId = response.timers.associateBy { it.id }
+                ApiResult.Ok(LightTimer.entries.associateWith { timer -> byId[timer.id]?.minutes?.takeIf(LightTimer::isValid) })
+            }
+        }
+    }
+
+    /**
+     * Règle une temporisation : cloud `PUT /api/portal/admin/lights/timers/{id}`, LAN `PUT /api/admin/lights/timers/{id}`,
+     * corps `{"minutes":n}`. La validation a lieu avant l'envoi ; le mode test répond `dry_run` (rien n'est mis en file).
+     */
+    suspend fun setLightTimer(timer: LightTimer, minutes: Int): ApiResult<InjectOutcome> {
+        require(LightTimer.isValid(minutes)) { "temporisation : 0 à ${LightTimer.MAX_MINUTES} minutes" }
+        val state = store.state.value
+        val prefix = if (state.mode == ConnectionMode.CLOUD) "/api/portal/admin" else "/api/admin"
+        val body = EssensysJson.encodeToJsonElement(LightTimerRequest(minutes))
+        return when (val result = api.send(state.baseUrl, "PUT", "$prefix/lights/timers/${timer.id}", body)) {
+            is ApiResult.Err -> result.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val response = runCatching { EssensysJson.decodeFromString(InjectResponse.serializer(), result.value.body) }.getOrNull()
+                val dryRun = response?.status == "dry_run" || response?.status == "test_ok" || response?.dryRun == true
+                ApiResult.Ok(if (dryRun) InjectOutcome.DRY_RUN_OK else InjectOutcome.SENT)
+            }
+        }
+    }
 
     /**
      * Mise en service ou arrêt de l'alarme, en cloud seulement. Le code n'est ni conservé ni renvoyé :

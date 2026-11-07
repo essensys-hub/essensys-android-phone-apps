@@ -47,7 +47,7 @@ class AuthRepository(private val api: ApiCaller, private val store: SessionStore
                         it.copy(
                             token = login.token, lanCookie = null, passwordChangeRequired = login.passwordChangeRequired,
                             rememberToken = remember, rememberExpiresAtMs = remember?.let { parseInstantMs(login.rememberExpiresAt) },
-                            sessionEnded = false,
+                            sessionEnded = false, isAdmin = AdminRole.isCloudAdmin(login.user?.role),
                         )
                     }
                     if (login.passwordChangeRequired) LoginOutcome.MustChangePassword else LoginOutcome.LoggedIn
@@ -56,10 +56,13 @@ class AuthRepository(private val api: ApiCaller, private val store: SessionStore
                     val cookie = extractLanCookie(result.value.setCookies)
                         ?: return LoginOutcome.Failed("La gateway n'a pas ouvert de session.")
                     val expiresAt = if (rememberMe) lanRememberExpiryMs(result.value.body) else null
+                    val role = runCatching { EssensysJson.decodeFromString(LanLoginResponse.serializer(), result.value.body) }
+                        .getOrNull()?.user?.role
+                    val isAdmin = AdminRole.isLanAdmin(role, api, state.baseUrl)
                     store.update {
                         it.copy(
                             lanCookie = cookie, token = null, passwordChangeRequired = false,
-                            rememberToken = null, rememberExpiresAtMs = expiresAt, sessionEnded = false,
+                            rememberToken = null, rememberExpiresAtMs = expiresAt, sessionEnded = false, isAdmin = isAdmin,
                         )
                     }
                     LoginOutcome.LoggedIn

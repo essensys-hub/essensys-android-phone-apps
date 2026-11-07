@@ -33,6 +33,11 @@ data class SessionState(
     val rememberExpiresAtMs: Long? = null,
     /** La session mémorisée a pris fin côté serveur : l'écran de connexion l'explique. Non persisté. */
     val sessionEnded: Boolean = false,
+    /**
+     * Administrateur de l'armoire, décodé à la connexion (voir `AdminRole`). Faux par défaut : une session enregistrée
+     * avant cette notion n'a pas de rôle et reste non administrateur jusqu'à la reconnexion.
+     */
+    val isAdmin: Boolean = false,
 ) {
     val baseUrl: String get() = if (mode == ConnectionMode.CLOUD) cloudHost else lanHost
     val isAuthenticated: Boolean get() = if (mode == ConnectionMode.CLOUD) token != null else lanCookie != null
@@ -47,7 +52,10 @@ interface SessionStore {
      * et l'indicateur [SessionState.sessionEnded], que seule une nouvelle connexion ou une déconnexion remet à zéro.
      */
     suspend fun clearSession() = update {
-        it.copy(token = null, lanCookie = null, passwordChangeRequired = false, rememberToken = null, rememberExpiresAtMs = null)
+        it.copy(
+            token = null, lanCookie = null, passwordChangeRequired = false, rememberToken = null, rememberExpiresAtMs = null,
+            isAdmin = false,
+        )
     }
 }
 

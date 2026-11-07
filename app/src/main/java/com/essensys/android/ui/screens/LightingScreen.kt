@@ -6,7 +6,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import com.essensys.android.data.control.LightTimer
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -21,11 +28,18 @@ import com.essensys.android.ui.theme.Essensys
 
 /** Éclairage — même structure que `LightingPage.tsx` (spec domotic-controls « Éclairage »). */
 @Composable
-fun LightingScreen(vm: ControlViewModel, commandsEnabled: Boolean) {
+fun LightingScreen(
+    vm: ControlViewModel,
+    commandsEnabled: Boolean,
+    /** Non nul pour l'administrateur : réglage de l'extinction automatique des six lumières concernées. */
+    timersVm: LightTimersViewModel? = null,
+) {
     val inFlight by vm.inFlight.collectAsStateWithLifecycle()
     val feedback by vm.feedback.collectAsStateWithLifecycle()
+    LaunchedEffect(timersVm) { timersVm?.load() }
     ScreenColumn {
         FeedbackBanner(feedback)
+        timersVm?.let { FeedbackBanner(it.state.collectAsStateWithLifecycle().value.feedback) }
         listOf(
             IndexTable.Group.MAIN to ("Éclairage principal" to "Plafonniers et appliques"),
             IndexTable.Group.INDIRECT to ("Éclairage indirect" to "Ambiance, chevets, miroirs"),
@@ -51,9 +65,24 @@ fun LightingScreen(vm: ControlViewModel, commandsEnabled: Boolean) {
                         loadingSecondary = "${light.id}-off" in inFlight,
                         enabled = commandsEnabled,
                     )
+                    val timer = LightTimer.byId(light.id)
+                    if (timersVm != null && timer != null) LightTimerPanel(timer, timersVm, commandsEnabled)
                 }
             }
         }
+    }
+}
+
+/** Réglage de l'extinction automatique sous la ligne de la lumière, replié par défaut (spec light-timers-clients). */
+@Composable
+private fun LightTimerPanel(timer: LightTimer, vm: LightTimersViewModel, commandsEnabled: Boolean) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    var open by rememberSaveable(timer.id) { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton({ open = !open }, Modifier.testTag("light-${timer.id}-timer-toggle")) {
+            Text("Extinction auto : ${LightTimer.describe(state.minutes[timer])}  ${if (open) "▴" else "▾"}")
+        }
+        if (open) LightTimerControl(timer, vm, commandsEnabled)
     }
 }
 

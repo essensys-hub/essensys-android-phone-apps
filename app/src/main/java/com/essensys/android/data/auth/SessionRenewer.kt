@@ -58,7 +58,13 @@ class SessionRenewer(
             is ApiResult.Ok -> {
                 val login = runCatching { EssensysJson.decodeFromString(CloudLoginResponse.serializer(), result.value.body) }.getOrNull()
                     ?: return Renewal.Unavailable(ApiError.Http(result.value.status, null, null))
-                store.update { it.copy(token = login.token, passwordChangeRequired = login.passwordChangeRequired) }
+                // Le rôle n'est relu que s'il est renvoyé : sinon celui de la connexion est conservé.
+                store.update {
+                    it.copy(
+                        token = login.token, passwordChangeRequired = login.passwordChangeRequired,
+                        isAdmin = login.user?.role?.let(AdminRole::isCloudAdmin) ?: it.isAdmin,
+                    )
+                }
                 log?.event("session", "Accès renouvelé")
                 Renewal.Renewed
             }
@@ -71,7 +77,10 @@ class SessionRenewer(
 
     private suspend fun end(): Renewal {
         store.update {
-            it.copy(token = null, rememberToken = null, rememberExpiresAtMs = null, passwordChangeRequired = false, sessionEnded = true)
+            it.copy(
+                token = null, rememberToken = null, rememberExpiresAtMs = null, passwordChangeRequired = false, sessionEnded = true,
+                isAdmin = false,
+            )
         }
         log?.event("session", "Session mémorisée terminée")
         return Renewal.Ended
