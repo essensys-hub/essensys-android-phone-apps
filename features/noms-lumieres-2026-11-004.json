@@ -1,0 +1,96 @@
+{
+  "$schema": "./schema/feature.schema.json",
+  "id": "noms-lumieres-2026-11-004",
+  "title": "Renommer les lumières (nom personnalisé affiché partout, modifiable par l'administrateur)",
+  "status": "proposed",
+  "owner": "nrineau",
+  "github": {
+    "issue": "essensys-hub/essensys-feature-lifecycle#41",
+    "project_item": null
+  },
+  "git": {
+    "branch": "feat/noms-lumieres-2026-11-004",
+    "pr_url": null
+  },
+  "openspec": {
+    "change_id": "noms-lumieres-2026-11-004",
+    "path": "openspec/changes/noms-lumieres-2026-11-004",
+    "proposal": "openspec/changes/noms-lumieres-2026-11-004/proposal.md",
+    "tasks": "openspec/changes/noms-lumieres-2026-11-004/tasks.md",
+    "specs": [
+      "openspec/changes/noms-lumieres-2026-11-004/specs/light-names-clients/spec.md"
+    ]
+  },
+  "implementation": {
+    "paths": [
+      "app/src/main/java/com/essensys/android/data/control/LightName.kt",
+      "app/src/main/java/com/essensys/android/data/control/ComfortRepository.kt",
+      "app/src/main/java/com/essensys/android/data/http/Dto.kt",
+      "app/src/main/java/com/essensys/android/ui/AppRoot.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightNamesViewModel.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightingScreen.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightTimerScreens.kt",
+      "app/src/main/java/com/essensys/android/ui/screens/LightTimersViewModel.kt",
+      "app/src/main/java/com/essensys/android/data/auth/AdminRole.kt"
+    ],
+    "primary_surface": "android"
+  },
+  "userguide": {
+    "pages": [
+      "README.md"
+    ],
+    "language": "fr",
+    "i18n_keys": [],
+    "screenshots": []
+  },
+  "tests": {
+    "playwright": [],
+    "coverage_must_test": [
+      "nom personnalise affiche dans la liste et dans Temporisations",
+      "repli sur le nom d'origine si la lecture echoue",
+      "nom special affiche tel quel",
+      "validation 1 a 40 caracteres avant envoi",
+      "remise a zero par Nom d'origine",
+      "champ Nom reserve a l'administrateur",
+      "messages 400 403 503",
+      "aucun ordre vers l'armoire"
+    ],
+    "smoke_tags": [
+      "@nr"
+    ],
+    "junit": [
+      "app/src/test/java/com/essensys/android/data/control/LightNamesTest.kt",
+      "app/src/test/java/com/essensys/android/ui/LightNamesViewModelTest.kt",
+      "app/src/test/java/com/essensys/android/data/auth/AdminRoleTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/LightNamesFlowTest.kt",
+      "app/src/androidTest/java/com/essensys/android/ui/FakeBackend.kt"
+    ]
+  },
+  "release": {
+    "changelog_entry": "Android 2.6.0 : renommer les lumières (nom affiché partout, modifiable par l'administrateur de l'armoire) (#45).",
+    "target_tag": "android-v2.6.0",
+    "surfaces": [
+      "android"
+    ],
+    "paths": []
+  },
+  "security": {
+    "sca_tool": "dependabot+trivy",
+    "dependabot_alerts_url": "https://github.com/essensys-hub/essensys-android-phone-apps/security/dependabot",
+    "last_scan_at": null,
+    "cve_findings": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0
+    },
+    "secret_scan": {
+      "status": "warning",
+      "tool": "gitleaks",
+      "last_scan_at": null
+    },
+    "muted_findings": [],
+    "threat_model_url": null,
+    "owner_security": "rhinosys"
+  }
+}
