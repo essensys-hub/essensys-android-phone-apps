@@ -20,7 +20,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.essensys.android.data.control.LayoutKind
 import com.essensys.android.data.control.LightTimer
+import com.essensys.android.data.control.ObjectLayout
+import com.essensys.android.data.control.ObjectLayouts
 import com.essensys.android.ui.components.ActionButton
 import com.essensys.android.ui.components.EssensysCard
 import com.essensys.android.ui.components.FeedbackBanner
@@ -33,9 +36,16 @@ import com.essensys.android.ui.theme.Essensys
  * Réservé aux administrateurs : l'appelant ne l'ouvre pas pour les autres (le serveur refuse de toute façon).
  */
 @Composable
-fun LightTimersScreen(vm: LightTimersViewModel, commandsEnabled: Boolean, namesVm: LightNamesViewModel? = null) {
+fun LightTimersScreen(
+    vm: LightTimersViewModel,
+    commandsEnabled: Boolean,
+    namesVm: LightNamesViewModel? = null,
+    /** Disposition des lumières : les lumières désactivées n'ont pas de ligne, l'ordre global est suivi. */
+    layoutVm: LightLayoutViewModel? = null,
+) {
     val names = namesVm?.state?.collectAsStateWithLifecycle()?.value?.names
     val state by vm.state.collectAsStateWithLifecycle()
+    val layout = ObjectLayouts.effective(LayoutKind.LIGHTS, layoutVm?.state?.collectAsStateWithLifecycle()?.value?.layout ?: ObjectLayout.DEFAULT)
     LaunchedEffect(Unit) { vm.load() }
     ScreenColumn {
         FeedbackBanner(state.feedback)
@@ -46,7 +56,9 @@ fun LightTimersScreen(vm: LightTimersViewModel, commandsEnabled: Boolean, namesV
             if (!commandsEnabled) {
                 Text("Armoire hors ligne : réglage indisponible.", Modifier.testTag("timers-offline"), color = Essensys.colors.textMuted)
             }
-            LightTimer.entries.forEach { timer ->
+            val timers = layout.visibleKeepingOwnOrder(LightTimer.entries, LayoutKind.LIGHTS.catalogue()) { it.id }
+            if (timers.isEmpty()) Text(ObjectLayouts.NO_LIGHT, Modifier.testTag("timers-empty"), color = Essensys.colors.textMuted)
+            timers.forEach { timer ->
                 LightTimerControl(timer, vm, commandsEnabled, showName = true, displayName = names?.get(timer.id)?.display ?: timer.label)
             }
         }

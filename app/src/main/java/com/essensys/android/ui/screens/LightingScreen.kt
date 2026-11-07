@@ -13,7 +13,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import com.essensys.android.data.control.LayoutKind
 import com.essensys.android.data.control.LightNames
+import com.essensys.android.data.control.ObjectLayout
+import com.essensys.android.data.control.ObjectLayouts
 import com.essensys.android.data.control.LightTimer
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.ui.Alignment
@@ -39,8 +42,14 @@ fun LightingScreen(
     namesVm: LightNamesViewModel? = null,
     /** Administrateur de l'armoire : champ « Nom » et « Nom d'origine » dans la fiche de chaque lumière. */
     canRename: Boolean = false,
+    /** Disposition (objets désactivés masqués, ordre choisi) ; null = catalogue complet dans l'ordre d'origine. */
+    layoutVm: LightLayoutViewModel? = null,
+    /** Administrateur de l'armoire : accès à l'écran de gestion de l'affichage. */
+    canManageLayout: Boolean = false,
 ) {
     val names = namesVm?.state?.collectAsStateWithLifecycle()?.value
+    val layoutState = layoutVm?.state?.collectAsStateWithLifecycle()?.value
+    val layout = ObjectLayouts.effective(LayoutKind.LIGHTS, layoutState?.layout ?: ObjectLayout.DEFAULT)
     fun shown(light: IndexTable.Light) = names?.names?.get(light.id)?.display ?: light.name
     val inFlight by vm.inFlight.collectAsStateWithLifecycle()
     val feedback by vm.feedback.collectAsStateWithLifecycle()
@@ -49,13 +58,22 @@ fun LightingScreen(
         FeedbackBanner(feedback)
         timersVm?.let { FeedbackBanner(it.state.collectAsStateWithLifecycle().value.feedback) }
         FeedbackBanner(names?.feedback)
+        if (canManageLayout && layoutVm != null) {
+            LayoutManager(
+                LayoutKind.LIGHTS, layoutVm,
+                listOf(IndexTable.Group.MAIN to "Éclairage principal", IndexTable.Group.INDIRECT to "Éclairage indirect"),
+                nameOf = { id -> names?.names?.get(id)?.display ?: IndexTable.lights.first { it.id == id }.name },
+            )
+        }
         listOf(
             IndexTable.Group.MAIN to ("Éclairage principal" to "Plafonniers et appliques"),
             IndexTable.Group.INDIRECT to ("Éclairage indirect" to "Ambiance, chevets, miroirs"),
         ).forEach { (group, titles) ->
-            val lights = IndexTable.lights.filter { it.group == group }
+            // Une seule liste, filtrée et ordonnée : le groupe et les lignes ne peuvent pas diverger.
+            val lights = layout.visible(IndexTable.lights.filter { it.group == group }) { it.id }
             EssensysCard(title = titles.first, description = titles.second) {
-                GroupActions(
+                if (lights.isEmpty()) Text(ObjectLayouts.NO_LIGHT, Modifier.testTag("group-$group-empty"), color = Essensys.colors.textMuted)
+                else GroupActions(
                     onAll = { on ->
                         vm.send("group-$group-$on", if (on) "Tout allumer" else "Tout éteindre", lights.map { it.command(on) })
                     },
