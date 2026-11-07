@@ -1,0 +1,6 @@
+## 5. App Android (essensys-android-phone-apps) (#49)
+
+- [x] 5.1 Ajouter `ObjectLayout.kt` (modèle, `effective`, validation), `readLightLayout` / `readShutterLayout` dans `ComfortRepository` (cloud et réseau local, repli sur le catalogue complet) et les `LightLayoutViewModel` / `ShutterLayoutViewModel` ; vérifier par des tests unitaires (ordre incomplet, identifiant inconnu, 404, tout désactivé, dernière lecture conservée)
+- [x] 5.2 Filtrer et ordonner `LightingScreen.kt`, `ShuttersScreen.kt` (liste, lecture des temps, carte « Temps de course ») et `LightTimerScreens.kt` ; vérifier par des tests d'interface (lumière désactivée absente de la liste, de « Tout allumer » (commandes inspectées) et des Temporisations ; volet désactivé absent de « Temps de course » ; `testTag` `time-current-<id>` de `TravelTimeFlowTest` inchangés pour les volets actifs)
+- [x] 5.3 Ajouter l'écran de gestion pour l'administrateur (interrupteur, Monter/Descendre, « Ordre d'origine », « Enregistrer », écritures cloud et local, messages d'erreur) ; vérifier par des tests unitaires et instrumentés (`NR-android-27`, aucune commande vers l'armoire, non-administrateur sans accès)
+- [ ] 5.4 Préparer la version 2.8.0 (notes, tag `android-v2.8.0`) ; vérifier par `testDebugUnitTest`, `lintDebug` et `check_release_apk.py` — notes et README faits, le tag reste à poser
