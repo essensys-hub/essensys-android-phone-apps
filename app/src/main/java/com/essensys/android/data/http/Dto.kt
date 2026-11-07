@@ -81,6 +81,18 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class LightTimerRequest(val minutes: Int)
 
+// Noms personnalisés des lumières (change noms-lumieres-2026-11-004, « Contrat d'API »).
+@Serializable data class LightNameDto(
+    val id: String,
+    @SerialName("default") val defaultName: String? = null,
+    val name: String? = null,
+    val version: Int = 0,
+    @SerialName("updated_at") val updatedAt: String? = null,
+    val status: String? = null,
+)
+
+@Serializable data class LightNamesResponse(val lights: List<LightNameDto> = emptyList())
+
 @Serializable data class InjectBatchRequest(val params: List<KeyValue>)
 
 // Synchronisation du planning de chauffage, LAN seulement (essensys-server-backend handlers.go).

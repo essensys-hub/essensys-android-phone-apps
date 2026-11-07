@@ -7,10 +7,15 @@ import com.essensys.android.data.http.ApiError
 import com.essensys.android.data.http.ApiResult
 import com.essensys.android.data.http.EssensysJson
 import com.essensys.android.data.http.InjectResponse
+import com.essensys.android.data.http.LightNameDto
+import com.essensys.android.data.http.LightNamesResponse
 import com.essensys.android.data.http.LightTimerRequest
 import com.essensys.android.data.http.LightTimersResponse
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.SessionStore
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 
 /** Modes actuels lus dans la table d'échange ; null = valeur non transmise par l'armoire. */
@@ -59,6 +64,48 @@ class ComfortRepository(
 
     /** Coupure ou rétablissement : un lot `[590 = 1, 623 = 1|2]`, en cloud comme en LAN. */
     suspend fun securityOutlets(action: IndexTable.SecurityOutletsAction) = control.injectBatch(action.commands())
+
+    /**
+     * Noms des lumières (spec light-names-clients) : cloud `GET /api/portal/lights/names`, LAN `GET /api/lights/names`.
+     * Le résultat couvre toujours les 33 lumières : une lumière absente de la réponse garde son nom d'origine, une
+     * lumière inconnue est ignorée. En cas d'échec, l'appelant garde [LightNames.fallback].
+     */
+    suspend fun readLightNames(): ApiResult<Map<String, LightName>> {
+        val state = store.state.value
+        val path = if (state.mode == ConnectionMode.CLOUD) "/api/portal/lights/names" else "/api/lights/names"
+        return when (val result = api.get(state.baseUrl, path)) {
+            is ApiResult.Err -> result.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val response = runCatching { EssensysJson.decodeFromString(LightNamesResponse.serializer(), result.value.body) }
+                    .getOrElse { return ApiResult.Err(ApiError.Http(result.value.status, null, null)) }
+                val byId = response.lights.associateBy { it.id }
+                ApiResult.Ok(LightNames.fallback().mapValues { (id, original) -> byId[id]?.toLightName(original) ?: original })
+            }
+        }
+    }
+
+    /**
+     * Renomme une lumière (administrateur) : cloud `PUT /api/portal/admin/lights/names/{id}`, LAN
+     * `PUT /api/admin/lights/names/{id}`, corps `{"name":"…"}` ; [name] nul = retour au nom d'origine (`{"name":null}`).
+     * Le nom est validé avant l'envoi. Aucun ordre n'est envoyé à l'armoire.
+     */
+    suspend fun setLightName(id: String, name: String?): ApiResult<LightNameSaved> {
+        val clean = if (name == null) null else LightNames.validate(name).getOrElse {
+            return ApiResult.Err(ApiError.Http(400, "invalid_name", LightNames.INVALID))
+        }
+        val state = store.state.value
+        val prefix = if (state.mode == ConnectionMode.CLOUD) "/api/portal/admin" else "/api/admin"
+        // explicitNulls = false retirerait `"name":null` : le corps est construit à la main.
+        val body = buildJsonObject { put("name", clean?.let(::JsonPrimitive) ?: JsonNull) }
+        return when (val result = api.send(state.baseUrl, "PUT", "$prefix/lights/names/$id", body)) {
+            is ApiResult.Err -> result.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val dto = runCatching { EssensysJson.decodeFromString(LightNameDto.serializer(), result.value.body) }.getOrNull()
+                val original = LightNames.fallback()[id]
+                ApiResult.Ok(LightNameSaved(original?.let { dto?.toLightName(it) }, dryRun = dto?.status == "dry_run"))
+            }
+        }
+    }
 
     /**
      * Temporisations des six lumières (spec light-timers-clients) : cloud `GET /api/portal/lights/timers`, LAN
@@ -127,3 +174,6 @@ class ComfortRepository(
         else -> error
     }
 }
+
+private fun LightNameDto.toLightName(original: LightName) =
+    LightName(id, defaultName?.takeIf { it.isNotBlank() } ?: original.defaultName, name, version, updatedAt)
