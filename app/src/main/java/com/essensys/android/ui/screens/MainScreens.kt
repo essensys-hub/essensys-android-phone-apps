@@ -37,6 +37,18 @@ import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import com.essensys.android.data.push.DoorbellNotifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -131,7 +143,7 @@ private fun HomeTile(tile: Tile, modifier: Modifier) {
 }
 
 @Composable
-fun SettingsScreen(vm: SessionViewModel, onSupport: () -> Unit = {}) {
+fun SettingsScreen(vm: SessionViewModel, onSupport: () -> Unit = {}, doorbellVm: DoorbellViewModel? = null) {
     val session by vm.session.collectAsStateWithLifecycle()
     ScreenColumn {
         EssensysCard(title = "Support", description = "Un problème ? L'appli teste votre connexion et prépare un diagnostic à envoyer par email.") {
@@ -163,11 +175,17 @@ fun SettingsScreen(vm: SessionViewModel, onSupport: () -> Unit = {}) {
             }
         }
         val account by vm.account.collectAsStateWithLifecycle()
+        val presence = account?.gatewayPresence()
+        if (doorbellVm != null && DoorbellViewModel.optionVisible(session.mode, presence)) DoorbellCard(doorbellVm)
         EssensysCard(title = "Compte") {
             if (session.mode == ConnectionMode.CLOUD) {
                 account?.user?.let { user ->
                     val name = listOfNotNull(user.firstName, user.lastName).joinToString(" ").ifBlank { null }
                     Text(listOfNotNull(name, user.email).joinToString(" — "), Modifier.testTag("account-user"), color = Essensys.colors.text)
+                }
+                // Champ absent (ancien cloud) : on garde l'affichage historique, sans ligne gateway.
+                presence?.let {
+                    Text(it.label, Modifier.testTag("gateway-state"), style = MaterialTheme.typography.bodySmall, color = Essensys.colors.textMuted)
                 }
                 account?.armoire?.let { armoire ->
                     Text(
@@ -197,3 +215,42 @@ internal fun formatLastSeen(raw: String): String = runCatching {
     java.time.Instant.parse(raw).atZone(java.time.ZoneId.systemDefault())
         .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
 }.getOrDefault(raw)
+
+/** Option « Sonnette » (spec doorbell-clients) : permission, enregistrement de l'appareil, aide, retour. */
+@Composable
+private fun DoorbellCard(vm: DoorbellViewModel) {
+    val state by vm.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+    var allowed by remember { mutableStateOf(DoorbellNotifier.allowed(context)) }
+    // À chaque retour dans l'app (y compris depuis les réglages du système) : permission et état cloud sont relus.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        allowed = DoorbellNotifier.allowed(context)
+        vm.refresh()
+    }
+    val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        allowed = DoorbellNotifier.allowed(context)
+        if (granted && allowed) vm.enable() else vm.permissionDenied()
+    }
+    EssensysCard(title = "Sonnette", description = DoorbellViewModel.HELP) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Me prévenir quand quelqu'un sonne", Modifier.weight(1f), color = Essensys.colors.text)
+            Switch(
+                checked = state.enabled && allowed,
+                enabled = !state.busy,
+                onCheckedChange = { on ->
+                    vm.clearFeedback()
+                    when {
+                        !on -> vm.disable()
+                        allowed -> vm.enable()
+                        DoorbellNotifier.needsRuntimePermission() &&
+                            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED ->
+                            permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        else -> vm.permissionDenied() // notifications coupées dans les réglages du système
+                    }
+                },
+                modifier = Modifier.testTag("doorbell-switch"),
+            )
+        }
+        FeedbackBanner(state.feedback)
+    }
+}

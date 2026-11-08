@@ -200,7 +200,8 @@ class SessionViewModel(
         store.update { it.copy(testMode = enabled) }
         log.event("settings", if (enabled) "Mode test activé" else "Mode test désactivé")
     }
-    fun logout() = viewModelScope.launch { auth.logout(); _link.value = null; _lastAction.value = null; log.event("session", "Déconnexion") }
+    /** Déconnexion : l'appareil est d'abord supprimé du cloud (notifications), tant que la session est valide. */
+    fun logout() = viewModelScope.launch { portal.unregisterPushDevice(); auth.logout(); _link.value = null; _lastAction.value = null; log.event("session", "Déconnexion") }
     fun clearMessages() { _error.value = null; _info.value = null }
 
     companion object {

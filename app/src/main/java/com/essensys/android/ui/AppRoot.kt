@@ -66,6 +66,7 @@ import com.essensys.android.ui.screens.LoginScreen
 import com.essensys.android.ui.screens.PasswordChangeScreen
 import com.essensys.android.ui.screens.ScreenColumn
 import com.essensys.android.ui.screens.SessionViewModel
+import com.essensys.android.ui.screens.DoorbellViewModel
 import com.essensys.android.ui.screens.SettingsScreen
 import com.essensys.android.ui.screens.LightTimersScreen
 import com.essensys.android.ui.screens.LightTimersViewModel
@@ -99,6 +100,7 @@ fun EssensysRoot(container: AppContainer) {
     val shutterLayoutVm: ShutterLayoutViewModel = viewModel { ShutterLayoutViewModel(container.comfort) }
     // Les temporisations affichent le nom personnalisé de la lumière (spec light-names-clients), pas le libellé d'origine.
     val timersVm: LightTimersViewModel = viewModel { LightTimersViewModel(container.comfort, nameOf = { namesVm.displayName(it.id, it.label) }) }
+    val doorbellVm: DoorbellViewModel = viewModel { DoorbellViewModel(container.doorbell) }
     val session by sessionVm.session.collectAsStateWithLifecycle()
     val link by sessionVm.link.collectAsStateWithLifecycle()
 
@@ -123,7 +125,7 @@ fun EssensysRoot(container: AppContainer) {
                     LaunchedEffect(session.mode, session.isAuthenticated) { sessionVm.refreshLink() }
                     when (val l = link) {
                         null -> Column(insets) { ScreenColumn { Text("Chargement…", color = Essensys.colors.textMuted) } }
-                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, timersVm, namesVm, shutterNamesVm, lightLayoutVm, shutterLayoutVm, supportVm, sendSupport)
+                        LinkState.Linked -> MainScaffold(sessionVm, controlVm, heatingVm, scenariosVm, comfortVm, timersVm, namesVm, shutterNamesVm, lightLayoutVm, shutterLayoutVm, supportVm, sendSupport, doorbellVm)
                         else -> Column(insets) { LinkScreen(sessionVm, l) }
                     }
                 }
@@ -146,6 +148,7 @@ private fun MainScaffold(
     shutterLayoutVm: ShutterLayoutViewModel,
     supportVm: SupportViewModel,
     sendSupport: (SupportPackage) -> Unit,
+    doorbellVm: DoorbellViewModel,
 ) {
     var destination by rememberSaveable { mutableStateOf(Destination.HOME) }
     var feature by rememberSaveable { mutableStateOf<Feature?>(null) }
@@ -242,7 +245,7 @@ private fun MainScaffold(
                 Destination.LIGHTING -> LightingScreen(controlVm, commandsEnabled, timersVm = timersVm.takeIf { session.isAdmin }, namesVm = namesVm, canRename = session.isAdmin, layoutVm = lightLayoutVm, canManageLayout = session.isAdmin)
                 Destination.SHUTTERS -> ShuttersScreen(controlVm, commandsEnabled, canReadTravelTimes = true, namesVm = shutterNamesVm, canRename = session.isAdmin, layoutVm = shutterLayoutVm, canManageLayout = session.isAdmin)
                 Destination.HEATING -> HeatingScreen(heatingVm, commandsEnabled, lanMode = session.mode == ConnectionMode.LAN)
-                Destination.SETTINGS -> SettingsScreen(sessionVm, onSupport = { feature = Feature.SUPPORT })
+                Destination.SETTINGS -> SettingsScreen(sessionVm, onSupport = { feature = Feature.SUPPORT }, doorbellVm = doorbellVm)
             }
         }
     }

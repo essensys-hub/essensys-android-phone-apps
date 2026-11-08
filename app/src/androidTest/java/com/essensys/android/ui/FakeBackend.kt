@@ -32,7 +32,14 @@ class FakeBackend(
     var rememberSupported: Boolean = true,
     /** Jetons d'accès que le portail refuse (401), pour simuler un accès de 24 h expiré. */
     var unauthorizedTokens: Set<String> = emptySet(),
+    /** `gateway_state` du cloud (`none`, `offline`, `online`) ; nul : champ absent (ancien cloud). Sonnette (#61). */
+    var gatewayState: String? = null,
+    /** Jeton push renvoyé par la source factice ; nul : Firebase non configuré. */
+    var pushToken: String? = "fake-fcm-token-0123456789",
 ) : AutoCloseable {
+    /** Appareils enregistrés par `PUT /api/portal/push/devices` : id → doorbell_notify (jamais de jeton conservé). */
+    val pushDevices = java.util.concurrent.ConcurrentHashMap<String, Boolean>()
+
     val injections = CopyOnWriteArrayList<String>()
 
     /** Fin de la session mémorisée renvoyée au login : 30 jours après le test. */
@@ -68,6 +75,21 @@ class FakeBackend(
                         else """{"status":"none","portal_access":false}""",
                     )
                     path == "/api/portal/session" -> json(sessionJson())
+                    // Sonnette (sonnette-plages-push-2026-11-008) : contrat cloud, serveur factice, aucun fournisseur réel.
+                    path == "/api/portal/push/devices" && request.method == "PUT" -> {
+                        val body = request.body?.utf8().orEmpty()
+                        val notify = body.contains(""""doorbell_notify":true""")
+                        pushDevices["dev-1"] = notify
+                        json("""{"id":"dev-1","platform":"android","doorbell_notify":$notify}""")
+                    }
+                    path.startsWith("/api/portal/push/devices/") && request.method == "DELETE" ->
+                        if (pushDevices.remove(path.substringAfterLast('/')) != null) MockResponse.Builder().code(204).build()
+                        else MockResponse.Builder().code(404).body("""{"error":"not_found"}""").build()
+                    path == "/api/portal/doorbell/preferences" -> json(
+                        """{"available":${gatewayState != null && gatewayState != "none"},"devices":[${
+                            pushDevices.entries.joinToString(",") { """{"id":"${it.key}","platform":"android","doorbell_notify":${it.value}}""" }
+                        }]}""",
+                    )
                     path == "/api/user/me" -> json("""{"user":{"id":1,"email":"demo@essensys.fr","role":"admin"}}""")
                     path == "/api/portal/history/latest" -> json("""{"lastAction":null,"message":"No actions yet"}""")
                     path == "/api/portal/inject" || path == "/api/portal/inject/batch" || path == "/api/admin/inject" -> {
@@ -273,7 +295,7 @@ class FakeBackend(
         val gateway = if (hasGateway) ""","gateway":{"id":"gw-demo","hostname":"demo","online":$gatewayOnline}""" else ""
         val seen = armoireOnline ?: (hasGateway && gatewayOnline)
         val armoire = if (hasArmoire) ""","armoire":{"id":1,"no_serie":"SC944D-0001","last_seen":"2026-10-25T08:00:00Z","online":$seen}""" else ""
-        return """{"user":{"id":1,"email":"demo@essensys.fr","first_name":"Camille","last_name":"Démo"},"portal_access":true$gateway$armoire}"""
+        return """{"user":{"id":1,"email":"demo@essensys.fr","first_name":"Camille","last_name":"Démo"},"portal_access":true$gateway$armoire${gatewayState?.let { ""","gateway_state":"$it"""" } ?: ""}}"""
     }
 
     private fun dryRun(request: RecordedRequest) = request.headers["X-Essensys-Test-Mode"] == "dry-run"
@@ -304,6 +326,7 @@ class FakeBackend(
             store, guardNoArmoire = true, configureLan = {},
             supportDir = File(context.cacheDir, "support"),
             mailer = { _, pkg -> supportMails += pkg },
+            pushTokens = { pushToken },
         )
     }
 
