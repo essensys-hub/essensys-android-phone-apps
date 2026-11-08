@@ -38,6 +38,9 @@ data class SessionState(
      * avant cette notion n'a pas de rôle et reste non administrateur jusqu'à la reconnexion.
      */
     val isAdmin: Boolean = false,
+    /** Appareil enregistré pour les notifications (identifiant cloud, sans jeton) et son choix « sonnette ». */
+    val pushDeviceId: String? = null,
+    val doorbellNotify: Boolean = false,
 ) {
     val baseUrl: String get() = if (mode == ConnectionMode.CLOUD) cloudHost else lanHost
     val isAuthenticated: Boolean get() = if (mode == ConnectionMode.CLOUD) token != null else lanCookie != null

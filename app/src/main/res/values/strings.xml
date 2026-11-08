@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Mon Essensys</string>
+    <string name="doorbell_channel_name">Sonnette</string>
+    <string name="doorbell_channel_description">Prévient quand quelqu\'un sonne à votre porte</string>
 </resources>

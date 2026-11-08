@@ -9,6 +9,8 @@ import com.essensys.android.data.control.ScenarioRepository
 import com.essensys.android.data.http.ApiCaller
 import com.essensys.android.data.http.HttpClientFactory
 import com.essensys.android.data.http.LanTrust
+import com.essensys.android.data.push.DoorbellRepository
+import com.essensys.android.data.push.PushTokenSource
 import com.essensys.android.data.session.ConnectionMode
 import com.essensys.android.data.session.PortalRepository
 import com.essensys.android.data.session.SessionStore
@@ -41,6 +43,8 @@ class AppContainer(
     val mailer: (Context, SupportPackage) -> Unit = SupportMail::send,
     /** Horloge du renouvellement de la session mémorisée ; remplacée par les tests (30 jours simulés). */
     clock: () -> Long = System::currentTimeMillis,
+    /** Jeton push ; nul par défaut (tests, build sans fichier Firebase) : l'option « Sonnette » ne peut pas s'activer. */
+    pushTokens: PushTokenSource = PushTokenSource { null },
 ) {
     val cloudClient: OkHttpClient = HttpClientFactory.create(sessionStore, guardNoArmoire, configureCloud, appLog)
     val lanClient: OkHttpClient = HttpClientFactory.create(sessionStore, guardNoArmoire, configureLan, appLog)
@@ -53,6 +57,7 @@ class AppContainer(
     val auth = AuthRepository(api, sessionStore)
     val control = ControlRepository(api, sessionStore, auth)
     val portal = PortalRepository(api, sessionStore, auth)
+    val doorbell = DoorbellRepository(portal, sessionStore, pushTokens)
     val scenarios = ScenarioRepository(api, sessionStore, auth)
     val comfort = ComfortRepository(api, sessionStore, auth, control)
     var heating = HeatingRepository(api, sessionStore, auth, control)
