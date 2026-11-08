@@ -183,7 +183,12 @@ import kotlinx.serialization.Serializable
     @SerialName("portal_access") val portalAccess: Boolean = false,
     val gateway: GatewayInfo? = null,
     val armoire: ArmoireInfo? = null,
+    /** `none`, `offline` ou `online` ; absent d'un ancien cloud (sonnette-plages-push-2026-11-008). */
+    @SerialName("gateway_state") val gatewayState: String? = null,
 ) {
+    /** État de la gateway annoncé par le cloud, nul si le champ est absent ou inconnu (l'affichage historique reste). */
+    fun gatewayPresence(): GatewayPresence? = GatewayPresence.parse(gatewayState)
+
     /**
      * Armoire en ligne : la gateway OU l'armoire elle-même a été vue depuis 2 min au plus.
      * Une installation sans gateway n'a pas de bloc `gateway` : seul `armoire.online` compte
@@ -205,3 +210,36 @@ import kotlinx.serialization.Serializable
 @Serializable data class AlarmRequest(val alarme: String, val codealarme: String) {
     override fun toString() = "AlarmRequest(alarme=$alarme, codealarme=••••)"
 }
+
+/** Présence de la gateway côté cloud (`gateway_state`). */
+enum class GatewayPresence(val label: String) {
+    NONE("Aucune gateway liée"), OFFLINE("Gateway hors ligne"), ONLINE("Gateway en ligne");
+
+    companion object {
+        fun parse(raw: String?): GatewayPresence? = when (raw) {
+            "none" -> NONE
+            "offline" -> OFFLINE
+            "online" -> ONLINE
+            else -> null
+        }
+    }
+}
+
+/** `PUT /api/portal/push/devices` : le jeton n'est ni journalisé ni renvoyé par le cloud. */
+@Serializable data class PushDeviceBody(
+    val platform: String,
+    val token: String,
+    @SerialName("app_version") val appVersion: String,
+    @SerialName("doorbell_notify") val doorbellNotify: Boolean,
+) {
+    override fun toString() = "PushDeviceBody(platform=$platform, token=••••, appVersion=$appVersion, doorbellNotify=$doorbellNotify)"
+}
+
+@Serializable data class PushDevice(
+    val id: String,
+    val platform: String? = null,
+    @SerialName("doorbell_notify") val doorbellNotify: Boolean = false,
+)
+
+/** `GET /api/portal/doorbell/preferences`. */
+@Serializable data class DoorbellPreferences(val available: Boolean = false, val devices: List<PushDevice> = emptyList())

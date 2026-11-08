@@ -51,6 +51,8 @@ class PersistentSessionStore private constructor(
         prefs.putOrRemove(REMEMBER_TOKEN, s.rememberToken?.let(cipher::encrypt))
         if (s.rememberExpiresAtMs == null) prefs.remove(REMEMBER_EXPIRES_AT) else prefs[REMEMBER_EXPIRES_AT] = s.rememberExpiresAtMs
         prefs.putOrRemove(PINNED_CA, s.pinnedLanCertPem)
+        prefs.putOrRemove(PUSH_DEVICE_ID, s.pushDeviceId)
+        prefs[DOORBELL_NOTIFY] = s.doorbellNotify
     }
 
     private fun MutablePreferences.putOrRemove(key: Preferences.Key<String>, value: String?) {
@@ -72,6 +74,8 @@ class PersistentSessionStore private constructor(
         private val REMEMBER_TOKEN = stringPreferencesKey("remember_token_enc")
         private val REMEMBER_EXPIRES_AT = longPreferencesKey("remember_expires_at_ms")
         private val PINNED_CA = stringPreferencesKey("pinned_lan_cert_pem")
+        private val PUSH_DEVICE_ID = stringPreferencesKey("push_device_id")
+        private val DOORBELL_NOTIFY = booleanPreferencesKey("doorbell_notify")
 
         /** Purge le stockage v1.0.0 ; retourne true si des identifiants en clair ont été supprimés. */
         fun purgeLegacy(context: Context): Boolean {
@@ -102,6 +106,8 @@ class PersistentSessionStore private constructor(
                 // Une date sans session derrière (secret illisible après un changement de clé) ne doit rien afficher.
                 rememberExpiresAtMs = prefs[REMEMBER_EXPIRES_AT]?.takeIf { rememberToken != null || lanCookie != null },
                 pinnedLanCertPem = prefs[PINNED_CA],
+                pushDeviceId = prefs[PUSH_DEVICE_ID],
+                doorbellNotify = prefs[DOORBELL_NOTIFY] ?: false,
             )
             return PersistentSessionStore(dataStore, cipher, initial)
         }

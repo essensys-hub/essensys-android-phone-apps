@@ -9,7 +9,10 @@ import com.essensys.android.data.http.LastAction
 import com.essensys.android.data.http.LanUserResponse
 import com.essensys.android.data.http.LinkRequestBody
 import com.essensys.android.data.http.LinkStatusResponse
+import com.essensys.android.data.http.DoorbellPreferences
 import com.essensys.android.data.http.PortalSession
+import com.essensys.android.data.http.PushDevice
+import com.essensys.android.data.http.PushDeviceBody
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.encodeToJsonElement
 
@@ -59,6 +62,38 @@ class PortalRepository(
     /** LAN : la gateway n'expose ni état ni historique ; on vérifie seulement la session. */
     suspend fun lanSessionValid(): ApiResult<Boolean> =
         get("/api/user/me", LanUserResponse.serializer()) { it.user != null }
+
+    /** Relit l'état « sonnette » des appareils du compte (jamais de jeton). */
+    suspend fun doorbellPreferences(): ApiResult<DoorbellPreferences> =
+        get("/api/portal/doorbell/preferences", DoorbellPreferences.serializer()) { it }
+
+    /**
+     * Enregistre (ou met à jour) cet appareil : `PUT /api/portal/push/devices`. L'identifiant renvoyé et le choix
+     * sont conservés pour la déconnexion et le renouvellement du jeton.
+     */
+    suspend fun registerPushDevice(token: String, appVersion: String, doorbellNotify: Boolean): ApiResult<PushDevice> {
+        val body = EssensysJson.encodeToJsonElement(PushDeviceBody("android", token, appVersion, doorbellNotify))
+        return when (val r = api.send(baseUrl, "PUT", "/api/portal/push/devices", body)) {
+            is ApiResult.Err -> r.also { auth.onApiError(it.error) }
+            is ApiResult.Ok -> {
+                val device = EssensysJson.decodeFromString(PushDevice.serializer(), r.value.body)
+                store.update { it.copy(pushDeviceId = device.id, doorbellNotify = device.doorbellNotify) }
+                ApiResult.Ok(device)
+            }
+        }
+    }
+
+    /**
+     * Supprime l'appareil côté cloud (déconnexion), brièvement et sans renouvellement de session. L'identifiant local
+     * est oublié dans tous les cas : un 404 signifie déjà supprimé, une panne réseau ne doit pas retenir la déconnexion.
+     */
+    suspend fun unregisterPushDevice(timeoutMs: Long = 3_000L) {
+        val id = store.state.value.pushDeviceId ?: return
+        if (store.state.value.mode == ConnectionMode.CLOUD && store.state.value.token != null) {
+            api.sendOnce(baseUrl, "DELETE", "/api/portal/push/devices/$id", null, callTimeoutMs = timeoutMs)
+        }
+        store.update { it.copy(pushDeviceId = null, doorbellNotify = false) }
+    }
 
     private suspend fun <T, R> get(path: String, serializer: KSerializer<T>, map: (T) -> R): ApiResult<R> =
         when (val r = api.get(baseUrl, path)) {

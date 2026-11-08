@@ -69,7 +69,22 @@ android {
     sourceSets.getByName("androidTest").resources.srcDir("src/test/resources")
 }
 
+// Notifications push (sonnette-plages-push-2026-11-008, essensys-feature-lifecycle#61). Le fichier google-services.json
+// du projet Firebase n'est JAMAIS versionné (dépôt public, ignoré par git) : il est fourni à la compilation, soit à
+// app/google-services.json, soit via la variable d'environnement ESSENSYS_GOOGLE_SERVICES_JSON (chemin du fichier).
+// Sans lui, le plugin n'est pas appliqué : le build reste vert et l'app fonctionne sans notification.
+val googleServicesFile: File? = (System.getenv("ESSENSYS_GOOGLE_SERVICES_JSON")?.takeIf { it.isNotBlank() }?.let(::file)
+    ?: file("google-services.json")).takeIf { it.isFile }
+if (googleServicesFile != null) {
+    // Le plugin lit app/google-services.json : on y copie le fichier fourni par la variable d'environnement.
+    val target = file("google-services.json")
+    if (googleServicesFile.canonicalPath != target.canonicalPath) googleServicesFile.copyTo(target, overwrite = true)
+    apply(plugin = "com.google.gms.google-services")
+}
+
 dependencies {
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)

@@ -1,6 +1,8 @@
 package com.essensys.android
 
 import android.app.Application
+import com.essensys.android.data.push.DoorbellNotifier
+import com.essensys.android.data.push.FirebaseTokenSource
 import com.essensys.android.data.session.PersistentSessionStore
 import com.essensys.android.data.support.AndroidDeviceProbe
 import com.essensys.android.data.support.AppLog
@@ -25,7 +27,10 @@ class EssensysApp : Application() {
             appLog = AppLog(File(filesDir, "support/journal.jsonl")),
             device = AndroidDeviceProbe(this),
             supportDir = File(cacheDir, "support"),
+            pushTokens = FirebaseTokenSource(this),
         )
+        // Le canal doit exister avant la première notification, y compris celles que le système affiche app fermée.
+        DoorbellNotifier.ensureChannel(this)
         container.appLog.event("app", "Démarrage ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
     }
 }

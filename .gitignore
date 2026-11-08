@@ -44,3 +44,7 @@ local.properties
 /build/
 /app/build/
 .artifacts/
+
+# Configuration Firebase : jamais versionnée (dépôt public), fournie à la compilation (sonnette-plages-push-2026-11-008)
+google-services.json
+**/google-services.json
