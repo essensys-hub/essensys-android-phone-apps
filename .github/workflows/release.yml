@@ -44,6 +44,20 @@ jobs:
           printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.p12"
           echo "ESSENSYS_KEYSTORE_PATH=$RUNNER_TEMP/release.p12" >> "$GITHUB_ENV"
 
+      - name: Firebase (secret → fichier temporaire)
+        env:
+          GOOGLE_SERVICES_B64: ${{ secrets.ANDROID_GOOGLE_SERVICES_B64 }}
+        run: |
+          # Sans ce fichier l'APK n'aurait aucun push : on refuse de publier (essensys-android-phone-apps#53).
+          if [ -z "$GOOGLE_SERVICES_B64" ]; then
+            echo "::error::Secret ANDROID_GOOGLE_SERVICES_B64 absent : release sans Firebase refusée."
+            exit 1
+          fi
+          umask 077
+          printf '%s' "$GOOGLE_SERVICES_B64" | base64 -d > "$RUNNER_TEMP/google-services.json"
+          python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$RUNNER_TEMP/google-services.json"
+          echo "ESSENSYS_GOOGLE_SERVICES_JSON=$RUNNER_TEMP/google-services.json" >> "$GITHUB_ENV"
+
       - name: APK release signé
         env:
           ESSENSYS_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -60,12 +74,15 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "$apk"
           "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$apk" | tee signer.txt
           # Bug #9 / NR-android-9 : refuser de publier un APK sans signature v2 ou sans arm64-v8a.
+          # Firebase compilé dans l'APK (ressource google_app_id générée par le plugin Google Services).
+          "$(ls "$ANDROID_HOME"/build-tools/*/aapt2 | tail -1)" dump resources "$apk" | grep -q "string/google_app_id" \
+            || { echo "::error::APK sans configuration Firebase (google_app_id)"; exit 1; }
           python3 scripts/check_release_apk.py "$apk" --junit .artifacts/apk-check/apk.xml
           sha256sum "$apk" | tee "$apk.sha256"
           echo "apk=$apk" >> "$GITHUB_OUTPUT"
           echo "signer=$(grep -m1 'SHA-256 digest' signer.txt | awk '{print $NF}')" >> "$GITHUB_OUTPUT"
           echo "sha=$(cut -d' ' -f1 "$apk.sha256")" >> "$GITHUB_OUTPUT"
-          rm -f "$RUNNER_TEMP/release.p12"
+          rm -f "$RUNNER_TEMP/release.p12" "$RUNNER_TEMP/google-services.json" app/google-services.json
 
       - name: Release GitHub
         env:
